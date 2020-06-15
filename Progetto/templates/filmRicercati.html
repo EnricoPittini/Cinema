@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+
+{% block pageblock %}
+{% if titolo %}
+La tua ricerca "{{titolo}}" ha prodotto i seguenti risultati: <br>
+{% endif %}
+{% if genere %}
+Il genere {{genere}} ha prodotto i seguenti risultati: <br>
+{% endif %}
+<ul>
+  {% for film in listaFIlm %}
+  <li> <a href={{url_for("mostraProiezioniFilm",id_film=film["idFilm"])}}>{{ film["titolo"] }}</a> </li>
+  {% endfor %}
+</ul>
+{% endblock %}
