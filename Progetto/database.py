@@ -138,16 +138,6 @@ metadata.create_all(engine)
                   ####{"orario":datetime(2019,4,15,20,30),"prezzo":10.5,"film":2,"sala":1},
                   #{"orario":datetime(2019,5,10,23,30),"prezzo":9.5,"film":6,"sala":2}])
 
-#ins=biglietti.insert()
-#conn.execute(ins,[#{"posto":11,"proiezione":1},
-#                  {"posto":38,"proiezione":1},
-#                  {"posto":1,"proiezione":1}
-#                   {"posto":11,"proiezione":6},
-#                   {"posto":50,"proiezione":6},
-#                   {"posto":1,"proiezione":6},
-#                    {"posto":1,"proiezione":4},
-#                    {"posto":11,"proiezione":4},
-#                    {"posto":50,"proiezione":4}])
 
 #conn.close()
 
