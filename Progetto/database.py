@@ -165,6 +165,9 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
         sesso="F"
     else : #Errore
         raise ResultException
+
+    #E' necessaria una transazione, perche' devo effettura in successione una lettura ed una scrittura nel database. L'eventuale concorrenza di questa operazione
+    #potrebbe generare problemi (lost update, fantasmi)
     conn=engine.connect()
     trans=conn.begin()
     try:
