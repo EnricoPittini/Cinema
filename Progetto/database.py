@@ -312,7 +312,7 @@ def compra_biglietto_query(posto,id_proiezione,email):
     trans=conn.begin()
 
     try:
-        if(posto in postiLiberi_proiezione_query(id_proiezione)): #Errore : posto già acquistato
+        if(posto in postiLiberi_proiezione_query(id_proiezione)): #Errore : posto gia' acquistato
             raise ResultException
         ins=biglietti.insert()
         conn.execute(ins,[{"posto":posto,"proiezione":id_proiezione,"cliente":email}]) #Creo nuovo biglietto
