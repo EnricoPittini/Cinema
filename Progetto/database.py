@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam
 from datetime import datetime
 #from exceptions import EmptyResultException
+############################################## Eccezioni definite da me per gestire meglio gli errori
 class EmptyResultException(Exception):
     pass
 
