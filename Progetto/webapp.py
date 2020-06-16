@@ -77,6 +77,7 @@ def private(email):
         usr=user_email_query(email) #Ritorna l'utente con quell'email
 
         posti=posti_cliente_query(email) #Ritorna i posti acquistati da questo utente, relativi a proiezioni future
+                                         #Oltre ai posti ci sono anche l'orario, il titolo e la sala della proiezione relativa a questi posti
 
         if(len(posti)==0):
             return render_template("private.html",nome=usr["nomeUtente"])
