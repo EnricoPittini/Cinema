@@ -1,0 +1,9 @@
+{% extends "base.html"%}
+
+{% block pageblock %}
+<h1>Statistiche per titolo</h1>
+<form action="/statistiche/perTitolo" method="POST">
+  <input name="titolo" type="text">
+  <input type="submit">
+</form>
+{% endblock %}

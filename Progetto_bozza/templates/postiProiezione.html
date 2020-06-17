@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block pageblock %}
+Ecco i posti liberi per la proiezione del film {{proiezFilm["titolo"]}} con orario {{proiezFilm["orario"]}} e sala {{proiezFilm["sala"]}} <br>
+Clicca su un posto per acquistarlo
+<ul>
+  {% for p in listaPostiLiberi %}
+  <li><a href={{url_for("confermaAcquistoPosto",id_proiezione=id_pro,posto=p)}}>{{ p }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

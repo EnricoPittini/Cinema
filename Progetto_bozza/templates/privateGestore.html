@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block pageblock %}
+<h1>Area Gestori</h1>
+<h3>Benvenuto {{nome}}!</h3><br>
+Clicca <a href="/amministra.html">qui</a> per gestire il cinema<br>
+Clicca <a href={{url_for("statistiche")}}>qui</a> per visualizzare le statistiche<br>
+Clicca <a href={{url_for("creaGestore")}}>qui</a> per creare altri gestori<br>
+
+Clicca <a href="/logout">qui</a> per eseguire il logout <br><br><br>
+
+{% endblock %}

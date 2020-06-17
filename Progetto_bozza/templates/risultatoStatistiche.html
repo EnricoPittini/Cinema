@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+
+{% block pageblock %}
+{% if titolo %}
+La tua ricerca "{{titolo}}" ha prodotto i seguenti risultati: <br>
+{% endif %}
+{% if genere %}
+Il genere {{genere}} ha prodotto i seguenti risultati: <br>
+{% endif %}
+<ul>
+  {% for key,value in stats.items() %}
+    <li>{{key}}: {{value}}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

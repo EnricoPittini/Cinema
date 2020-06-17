@@ -1,0 +1,15 @@
+{% extends "base.html"%}
+
+{% block pageblock %}
+<h1>Statistiche per titolo</h1>
+<form action="/statistiche/perGenere" method="POST">
+  <input name="genere" list="generi">
+  <datalist id="generi">
+  {% for value in generi%}
+    <option value={{value}}>
+  {% endfor %}
+  </datalist>
+  <input type="submit">
+</form>
+
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block pageblock%}
+<h1>Statistiche dei vari film</h1>
+  <ul>
+    <li><a href={{url_for("statisticheGenere")}}>Per genere</a></li>
+    <li><a href={{url_for("statisticheTitolo")}}>Per titolo</a></li>
+  </ul>
+{% endblock %}
