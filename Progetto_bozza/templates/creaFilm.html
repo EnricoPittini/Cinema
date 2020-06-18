@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block pageblock%}
+<h1>Inserisci un film</h1>
+<form action="/creaFilm" method="POST">
+  Titolo:<input name="titolo" type="text">
+  Anno:<input name="anno" type="text">
+  Regista:<input name="regista" type="text">
+  Genere:<select name="generi" id="generi" multiple>
+            {% for value in genere%}
+            <option value="{{value}}">{{value}}</option>
+            {% endfor %}
+         </select>
+  Durata:<input name="minuti" type="text">
+  <input type="submit">
+</form>
+{% endblock %}

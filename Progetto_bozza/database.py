@@ -365,3 +365,45 @@ def statisticheGenere_query(genere):
     else:
         result={'Numero Proiezioni':nproiezioni[0]["nproiezioni"], 'Numero Biglietti venduti':nbiglietti[0]["nbiglietti"],'Guadagno totale':ricavo[0]["guadagno"]}
     return result
+
+def aggiungi_film_query(titolo,anno,regista,genere,durata):
+    conn=engine.connect()
+    trans=conn.begin()
+    try:
+        #trovo l'id successivo del film
+        q1=select([func.count().label("id")]).select_from(film)
+        res=conn.execute(q1)
+        id=res.fetchall()
+        #inserisco il film
+        ins=film.insert()
+        conn.execute(ins,[{"idFilm":(id[0]["id"])+1,"titolo":titolo,"anno":anno,"regista":regista,"minuti":durata}])
+        #inserisco i generi del film
+        for value in genere:
+            ins=generi.insert()
+            conn.execute(ins,[{"genere":value,"film":(id[0]["id"])+1}])
+        trans.commit()
+        conn.close()
+    except:
+        trans.rollback()
+        conn.close()
+        raise ResultException
+
+def aggiungi_sala_query(nposti):
+    conn=engine.connect()
+    trans=conn.begin()
+    try:
+        #trovo l'id successivo del film
+        q1=select([func.count().label("id")]).select_from(sale)
+        res=conn.execute(q1)
+        id=res.fetchall()
+        #creo la nuova sala
+        ins=sale.insert()
+        conn.execute(ins,[{"idSala":id[0]["id"]+1,"numPosti":nposti,"disponibile":False}])
+        trans.commit()
+        conn.close()
+        sala=id[0]["id"]+1
+        return sala
+    except:
+        trans.rollback()
+        conn.close()
+        raise ResultException

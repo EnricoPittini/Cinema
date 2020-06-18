@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block pageblock%}
+<h1>Amministrazione del Database</h1>
+  <ul>
+    <li><a href={{url_for("creaFilm")}}>Aggiungi film</a></li>
+    <li><a href={{url_for("creaSala")}}>Aggiungi sala</a></li>
+    <li><a href="">Gestisci sale</a></li>
+    <li><a href="">Aggiungi proiezione</a></li>
+    <li><a href="">Elimina proiezione futura</a></li>
+  </ul>
+{% endblock %}
