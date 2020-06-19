@@ -8,6 +8,9 @@ La tua ricerca "{{titolo}}" ha prodotto i seguenti risultati: <br>
 {% if genere %}
 Il genere {{genere}} ha prodotto i seguenti risultati: <br>
 {% endif %}
+{% if provincia %}
+Statistiche per gli utenti di {{provincia}} hanno prodotto i seguenti risultati: <br>
+{% endif %}
 <ul>
   {% for key,value in stats.items() %}
     <li>{{key}}: {{value}}</li>

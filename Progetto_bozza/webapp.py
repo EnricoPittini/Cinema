@@ -70,7 +70,7 @@ def private(email):
     try:
         usr=user_email_query(email)
         posti=posti_cliente_query(email)
-        if(is_gestore_query(email)):
+        if(current_user.isGestore()):
             return render_template("privateGestore.html",nome=usr["nomeUtente"])
         elif(len(posti)==0):
             return render_template("private.html",nome=usr["nomeUtente"])
@@ -176,12 +176,6 @@ def ricercaPerGenereFilms(genereFilm):
 #PARTE gestore
 ########################################################################
 
-#funzione per controllare se il mio utente e' un gestore
-@login_required
-def isGestore(user_id):
-
-    return is_gestore_query(current_user.get_id())
-
 @app.route("/statistiche")
 @login_required
 def statistiche():
@@ -190,7 +184,7 @@ def statistiche():
 @app.route("/statistiche/perTitolo",methods=['GET','POST'])
 @login_required
 def statisticheTitolo():
-    if isGestore(current_user.get_id()) is False:
+    if current_user.isGestore() is False:
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
         if(request.method == 'POST'):
@@ -202,7 +196,7 @@ def statisticheTitolo():
 @app.route("/statistiche/perGenere",methods=['GET','POST'])
 @login_required
 def statisticheGenere():
-    if isGestore(current_user.get_id()) is False:
+    if current_user.isGestore() is False:
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
         if(request.method == 'POST'):
@@ -211,10 +205,22 @@ def statisticheGenere():
         else:
             return render_template("statistichePerGenere.html",generi=generi_query())
 
+@app.route("/statistiche/perProvincia",methods=['GET','POST'])
+@login_required
+def statisticheProvincia():
+    if current_user.isGestore() is False:
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+    else:
+        if(request.method == 'POST'):
+            res=statisticheProvincia_query(request.form["provincia"])
+            return render_template("risultatoStatistiche.html",provincia=request.form["provincia"],stats=res)
+        else:
+            return render_template("statistichePerProvincia.html",province=province_query())
+
 @app.route("/creaGestore",methods=['GET','POST'])
 @login_required
 def creaGestore():
-    if isGestore(current_user.get_id()) is False:
+    if current_user.isGestore() is False:
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
         if(request.method == 'POST'):
@@ -235,7 +241,7 @@ def creaGestore():
 @app.route("/amministra")
 @login_required
 def amministra():
-    if isGestore(current_user.get_id()) is False:
+    if current_user.isGestore() is False:
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
         return render_template("amministra.html")
@@ -243,7 +249,7 @@ def amministra():
 @app.route("/creaFilm",methods=['GET','POST'])
 @login_required
 def creaFilm():
-    if isGestore(current_user.get_id()) is False:
+    if current_user.isGestore() is False:
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
         if(request.method == 'POST'):
@@ -261,7 +267,7 @@ def creaFilm():
 @app.route("/creaSala",methods=['GET','POST'])
 @login_required
 def creaSala():
-    if isGestore(current_user.get_id()) is False:
+    if current_user.isGestore() is False:
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
         if(request.method == 'POST'):
@@ -272,17 +278,46 @@ def creaSala():
             return render_template("creaSala.html")
 
 
-@app.route("/gestisciSala")
+@app.route("/gestisciSala",methods=['GET','POST'])
 @login_required
 def gestisciSala():
-    return render_template()
+    if current_user.isGestore() is False:
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+    else:
+        if(request.method == 'POST'):
+            #TODO
+            return render_template("gestisciSale.html",sale=sale_query())
+        else:
+            sale=sale_query()
+            return render_template("gestisciSale.html",sale=sale_query())
 
-@app.route("/aggiungiProiezione")
+@app.route("/aggiungiProiezione",methods=['GET','POST'])
 @login_required
 def aggiungiProiezione():
-    return render_template()
+    if current_user.isGestore() is False:
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+    else:
+        if(request.method == 'POST'):
+            film=request.form["film"]
+            sala=request.form["sale"]
+            orario=request.form["orario"]
+            prezzo=request.form["prezzo"]
+            aggiungi_proiezione_query(film,orario,sala,prezzo)
+            return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_query())
+        else:
+            return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_query())
 
 @app.route("/eliminaProiezioneFutura")
 @login_required
 def eliminaProiezioneFutura():
-    return render_template()
+    if current_user.isGestore() is False:
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+    else:
+        return render_template("eliminaProiezione.html",proiezioni=proiezioni_future_query())
+
+@app.route("/eliminaProiezioneFutura/<proiezione>")
+def eliminaProiezioneFuturaProc(proiezione):
+    if current_user.isGestore() is False:
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+    else:
+        delete_proiezione_query(proiezione)

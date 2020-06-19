@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block pageblock %}
+<h1>Elimina una proiezione</h1>
+<ul>
+  {% for value in proiezioni %}
+      <li>
+        <a href={{url_for("eliminaProiezioneFuturaProc",proiezione=value["idProiezione"])}}>Proiezione:{{value["idProiezione"]}}</a><br>
+        Orario:{{value["orario"]}}<br>
+        Prezzo:{{value["prezzo"]}}<br>
+        Film:{{value["titolo"]}}
+      </li>
+
+  {% endfor %}
+</ul>
+{% endblock %}
