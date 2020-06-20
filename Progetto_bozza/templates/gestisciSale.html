@@ -62,17 +62,17 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 </style>
-<form action="/creaSala" method="POST">
+<form action="/gestisciSala" method="POST">
   <h4>IdSala Disponibilita'</h4>
   {% for value in sale%}
-  <p>
-  {{value}}:
+    <p>
+    {{value}}:
 
-  <label class="switch">
-    <input type="checkbox">
-    <span class="slider round"></span>
-  </label>
-  </p>
+    <label class="switch">
+      <input value={{value}} name="mycheckbox" type="checkbox">
+      <span class="slider round"></span>
+    </label>
+    </p>
   {% endfor %}
   <input type="submit">
 </form>

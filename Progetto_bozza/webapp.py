@@ -1,3 +1,4 @@
+import numpy as np
 from flask import Flask,render_template,redirect,url_for,request
 from database import *
 from flask_login import LoginManager,UserMixin,login_required,login_user,logout_user,current_user
@@ -285,7 +286,11 @@ def gestisciSala():
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
         if(request.method == 'POST'):
-            #TODO
+            nsale=len(sale_query())
+            list=[i for i in request.form.getlist("mycheckbox")]
+            #creazione lista sale disponibili
+            print(list)
+            print(sale_query())
             return render_template("gestisciSale.html",sale=sale_query())
         else:
             sale=sale_query()
@@ -302,7 +307,7 @@ def aggiungiProiezione():
             sala=request.form["sale"]
             orario=request.form["orario"]
             prezzo=request.form["prezzo"]
-            aggiungi_proiezione_query(film,orario,sala,prezzo)
+            aggiungi_proiezione_query(film,sala,orario,prezzo)
             return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_query())
         else:
             return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_query())
@@ -321,3 +326,4 @@ def eliminaProiezioneFuturaProc(proiezione):
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
         delete_proiezione_query(proiezione)
+        return url_for("eliminaProiezioneFutura")

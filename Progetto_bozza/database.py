@@ -454,8 +454,8 @@ def aggiungi_proiezione_query(film,sala,orario,prezzo):
     try:
         #trovo se ho film allo stesso orario
         #TODO
-        q1=select([proiezioni.c.film]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.sala==sale.c.idSala,sale.c.idSala==bindparam('sala')))
-        res=conn.execute(q1,sala=sala)
+        q1=select([proiezioni.c.film]).where(and_(proiezioni.c.sala==sale.c.idSala,sale.c.idSala==bindparam('sala'),proiezioni.c.orario<bindparam('orario')))
+        res=conn.execute(q1,sala=sala,orario=orario)
         filmstessoorario=res.fetchall()
         list=[x["film"] for x in filmstessoorario]
         if(len(list)>0):
@@ -470,10 +470,41 @@ def aggiungi_proiezione_query(film,sala,orario,prezzo):
         conn.close()
         raise ResultException
 
+def gestisci_sale_query(listasaledisponibili):
+    conn=engine.connect()
+    trans=conn.begin()
+    try:
+        #setto tutte le sale che non ho selezionato non disponibili
+        listasale=sale_query()
+        listasalenondisponibili = [i for i in listasaledisponibili if i not in listasale]
+        print(listasalenondisponibili)
+        print(listasaledisponibili)
+        #imposto le sale non disponibili
+        for value in listasalenondisponibili:
+            q=update(sale).where(sale.c.idSala==bindparam('sala')).\
+                values(disponibile=False)
+            res=conn.execute(q,sala=value)
+        #rendo sale disponibili
+        for value in listasaledisponibili:
+            q=update(sale).where(sale.c.idSala==bindparam('sala')).\
+                values(disponibile=True)
+            res=conn.execute(q,sala=value)
+        trans.commit()
+        conn.close()
+    except:
+        trans.rollback()
+        conn.close()
+        raise ResultException
+
 def delete_proiezione_query(proiezione):
     conn=engine.connect()
     trans=conn.begin()
-    deleteproiezione=proiezioni.delete().where(proiezioni.c.idProiezione==bindparam("proiezione"))
-    res=conn.execute(deleteproiezione,proiezione=proiezione)
-    trans.commit()
-    conn.close()
+    try:
+        deleteproiezione=proiezioni.delete().where(and_(proiezioni.c.idProiezione==bindparam('proiezione'),proiezione.c.sala==sale.c.idSala,sale.c.disponibile==True))
+        res=conn.execute(deleteproiezione,proiezione=proiezione)
+        trans.commit()
+        conn.close()
+    except:
+        trans.rollback()
+        conn.close()
+        raise ResultException
