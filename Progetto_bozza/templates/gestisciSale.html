@@ -63,17 +63,26 @@ input:checked + .slider:before {
 }
 </style>
 <form action="/gestisciSala" method="POST">
-  <h4>IdSala Disponibilita'</h4>
-  {% for value in sale%}
-    <p>
-    {{value}}:
-
-    <label class="switch">
-      <input value={{value}} name="mycheckbox" type="checkbox">
-      <span class="slider round"></span>
-    </label>
-    </p>
-  {% endfor %}
+  <table border="1px" style="text-align:center;">
+    <tr>
+      <th>Sala</th>
+      <th>Imposta disponibilita'</th>
+    </tr>
+    {% for value in sale%}
+    <tr>
+      <td>
+        {{value}}
+      </td>
+      <td>
+        <label class="switch">
+          <input value={{value}} name="mycheckbox" type="checkbox">
+          <span class="slider round"></span>
+        </label>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  <br>
   <input type="submit">
 </form>
 

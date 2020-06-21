@@ -16,4 +16,39 @@ Statistiche per gli utenti di {{provincia}} hanno prodotto i seguenti risultati:
     <li>{{key}}: {{value}}</li>
   {% endfor %}
 </ul>
+<table border="1px" style="text-align:center">
+  {% if films %}
+    <tr>
+      <th>Titolo</th>
+      <th>Anno</th>
+      <th>Regista</th>
+      <th>Durata</th>
+    </tr>
+    {% for value in films %}
+      <tr>
+        <td>{{value["titolo"]}}</td>
+        <td>{{value["anno"]}}</td>
+        <td>{{value["regista"]}}</td>
+        <td>{{value["minuti"]}}</td>
+      </tr>
+    {% endfor %}
+  {% endif %}
+  {% if utenti %}
+    <tr>
+      <th>Utente</th>
+      <th>Anno di nascita</th>
+      <th>Sesso</th>
+      <th>Provincia</th>
+    </tr>
+    {% for value in utenti %}
+      <tr>
+        <td>{{value["nomeUtente"]}}</td>
+        <td>{{value["annoNascita"]}}</td>
+        <td>{{value["sesso"]}}</td>
+        <td>{{value["provincia"]}}</td>
+      </tr>
+    {% endfor %}
+  {% endif %}
+
+</table>
 {% endblock %}

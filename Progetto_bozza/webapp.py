@@ -190,7 +190,7 @@ def statisticheTitolo():
     else:
         if(request.method == 'POST'):
             res=statisticheTitolo_query(request.form["titolo"])
-            return render_template("risultatoStatistiche.html",titolo=request.form["titolo"],stats=res)
+            return render_template("risultatoStatistiche.html",titolo=request.form["titolo"],stats=res,films=film_statistiche_query(request.form["titolo"]))
         else:
             return render_template("statistichePerTitolo.html")
 
@@ -202,7 +202,7 @@ def statisticheGenere():
     else:
         if(request.method == 'POST'):
             res=statisticheGenere_query(request.form["genere"])
-            return render_template("risultatoStatistiche.html",genere=request.form["genere"],stats=res)
+            return render_template("risultatoStatistiche.html",genere=request.form["genere"],stats=res,films=generi_statistiche_query(request.form["genere"]))
         else:
             return render_template("statistichePerGenere.html",generi=generi_query())
 
@@ -214,7 +214,7 @@ def statisticheProvincia():
     else:
         if(request.method == 'POST'):
             res=statisticheProvincia_query(request.form["provincia"])
-            return render_template("risultatoStatistiche.html",provincia=request.form["provincia"],stats=res)
+            return render_template("risultatoStatistiche.html",provincia=request.form["provincia"],stats=res,utenti=utenti_province_query(request.form["provincia"]))
         else:
             return render_template("statistichePerProvincia.html",province=province_query())
 
@@ -286,11 +286,9 @@ def gestisciSala():
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
         if(request.method == 'POST'):
-            nsale=len(sale_query())
-            list=[i for i in request.form.getlist("mycheckbox")]
             #creazione lista sale disponibili
-            print(list)
-            print(sale_query())
+            list=[int(i) for i in request.form.getlist("mycheckbox")]
+            gestisci_sale_query(list)
             return render_template("gestisciSale.html",sale=sale_query())
         else:
             sale=sale_query()

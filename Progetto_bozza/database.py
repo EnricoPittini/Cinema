@@ -152,12 +152,24 @@ def user_email_query(usr_email):
         raise EmptyResultException
     return user[0]
 
+def utenti_province_query(prov):
+    conn = engine.connect()
+    res = conn.execute(select([utenti.c.nomeUtente,utenti.c.annoNascita,utenti.c.sesso,utenti.c.provincia]).where(utenti.c.provincia==bindparam('provincia')),provincia=prov)
+    conn.close()
+    return res.fetchall()
+
 def film_query():
     conn = engine.connect()
     res = conn.execute(select([film.c.idFilm]))
     list=[x["idFilm"] for x in res.fetchall()]
     conn.close()
     return list
+
+def film_statistiche_query(titolo):
+    conn = engine.connect()
+    res = conn.execute(select([film.c.titolo,film.c.anno,film.c.regista,film.c.minuti]).where(film.c.titolo.contains(bindparam('movie'))),movie=titolo)
+    conn.close()
+    return res.fetchall()
 
 def province_query():
     conn = engine.connect()
@@ -172,6 +184,12 @@ def generi_query(): #ritorna tutti i generi memorizzati nel database
     list=[x["genere"] for x in res.fetchall()]
     conn.close()
     return deleteDup(list)
+
+def generi_statistiche_query(genere):
+    conn = engine.connect()
+    res = conn.execute(select([film.c.titolo,film.c.anno,film.c.regista,film.c.minuti]).where(and_(film.c.idFilm==generi.c.film,generi.c.genere==bindparam('genere'))),genere=genere)
+    conn.close()
+    return res.fetchall()
 
 def sale_query():
     conn = engine.connect()
@@ -474,20 +492,16 @@ def gestisci_sale_query(listasaledisponibili):
     conn=engine.connect()
     trans=conn.begin()
     try:
-        #setto tutte le sale che non ho selezionato non disponibili
         listasale=sale_query()
-        listasalenondisponibili = [i for i in listasaledisponibili if i not in listasale]
-        print(listasalenondisponibili)
-        print(listasaledisponibili)
+        #setto tutte le sale che non ho selezionato non disponibili
+        listasalenondisponibili = [i for i in listasale if i not in listasaledisponibili]
         #imposto le sale non disponibili
         for value in listasalenondisponibili:
-            q=update(sale).where(sale.c.idSala==bindparam('sala')).\
-                values(disponibile=False)
+            q=sale.update().values(disponibile=False).where(sale.c.idSala==bindparam('sala'))
             res=conn.execute(q,sala=value)
         #rendo sale disponibili
         for value in listasaledisponibili:
-            q=update(sale).where(sale.c.idSala==bindparam('sala')).\
-                values(disponibile=True)
+            q=sale.update().values(disponibile=True).where(sale.c.idSala==bindparam('sala'))
             res=conn.execute(q,sala=value)
         trans.commit()
         conn.close()
