@@ -1,14 +1,12 @@
-{% extends "base.html" %}
+{% extends "statistiche_base.html" %}
 
 
 {% block pageblock %}
 {% if titolo %}
 La tua ricerca "{{titolo}}" ha prodotto i seguenti risultati: <br>
-{% endif %}
-{% if genere %}
+{% elif genere %}
 Il genere {{genere}} ha prodotto i seguenti risultati: <br>
-{% endif %}
-{% if provincia %}
+{% elif provincia %}
 Statistiche per gli utenti di {{provincia}} hanno prodotto i seguenti risultati: <br>
 {% endif %}
 <ul>

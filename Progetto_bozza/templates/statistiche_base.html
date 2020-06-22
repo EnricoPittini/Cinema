@@ -1,0 +1,19 @@
+<html>
+<head>
+  <title> Cinemone </title>
+</head>
+<body>
+  <a href="/"> HOME </a><br><br>
+  {% if percorso is not defined %}
+    <a href={{url_for("statistiche")}}>Torna a statistiche</a><br><br>
+  {% elif percorso == 0 %}
+    <a href={{url_for("statisticheTitolo")}}>Torna a statistiche per {{descrizione}}</a><br><br>
+  {% elif percorso == 1%}
+    <a href={{url_for("statisticheGenere")}}>Torna a statistiche per {{descrizione}}</a><br><br>
+  {% elif percorso == 2 %}
+    <a href={{url_for("statisticheProvincia")}}>Torna a statistiche per {{descrizione}}</a><br><br>
+  {% endif %}
+  {% block pageblock %}
+  {% endblock %}
+</body>
+</html>

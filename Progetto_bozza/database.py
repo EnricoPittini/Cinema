@@ -1,12 +1,14 @@
 from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func
 from datetime import datetime
 #from exceptions import EmptyResultException
+############################################## Eccezioni definite da me per gestire meglio gli errori
 class EmptyResultException(Exception):
     pass
 
 class ResultException(Exception):
     pass
 
+###################################################
 engine=create_engine("postgres://matteo:matteofacci@localhost:5432/cinema")
 metadata=MetaData()
 utenti=Table("Utenti",metadata,Column("email",String,primary_key=True)
@@ -141,7 +143,7 @@ conn.execute(ins,[{"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":1,"sal
 
 conn.close()"""
 
-
+######################################### Query per login e registrazione
 def user_email_query(usr_email):
     conn = engine.connect()
     s=select([utenti]).where(utenti.c.email==bindparam("email"))
@@ -176,9 +178,21 @@ def province_query():
     res = conn.execute(select([utenti.c.provincia]))
     list=[x["provincia"] for x in res.fetchall()]
     conn.close()
+    if(len(list)==0):
+        raise EmptyResultException
     return deleteDup(list)
 
-def generi_query(): #ritorna tutti i generi memorizzati nel database
+def province_prov_query(prov):
+    conn = engine.connect()
+    res = conn.execute(select([utenti.c.provincia]).where(utenti.c.provincia==bindparam('provincia')),provincia=prov)
+    list=[x["provincia"] for x in res.fetchall()]
+    conn.close()
+    if(len(list)==0):
+        raise EmptyResultException
+    return deleteDup(list)
+
+#ritorna tutti i generi memorizzati nel database
+def generi_query():
     conn=engine.connect()
     res=conn.execute(select([generi.c.genere]))
     list=[x["genere"] for x in res.fetchall()]
@@ -204,6 +218,7 @@ def proiezioni_future_query():
     conn.close()
     return res
 
+#Crea un nuovo utente (cliente) con questi dati
 def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
     if("maschio" in sesso):
         sesso="M"
@@ -212,6 +227,8 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
     conn=engine.connect()
     trans=conn.begin()
     try:
+        #E' necessaria una transazione, perche' devo effettura in successione una lettura ed una scrittura nel database. L'eventuale concorrenza di questa operazione
+        #potrebbe generare problemi (lost update, fantasmi)
         s=select([utenti]).where(utenti.c.email==bindparam("eml"))
         res=conn.execute(s,eml=email)
         res=res.fetchall()
@@ -222,7 +239,7 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
         conn.execute(ins,[{"email":email,"nomeUtente":nomeUtente,"pwd":pwd,"annoNascita":annoNascita,"sesso":sesso,"provincia":provincia,"gestore":False}])
         trans.commit()
         conn.close()
-    except:
+    except:#Errore
         trans.rollback()
         conn.close()
         raise ResultException
@@ -250,6 +267,8 @@ def aggiungi_utente_gestore_query(email,pwd,nomeUtente,annoNascita,sesso,provinc
         conn.close()
         raise ResultException
 
+#Ritorna i posti comprati dal cliente con questa email. Questi posti sono relativi a proiezioni future
+#Oltre ai posti, ritorna anche l'orario,il titolo e la sala della proiezione relativa
 def posti_cliente_query(email):
     conn=engine.connect()
     s=select([biglietti.c.posto,proiezioni.c.orario,film.c.titolo,proiezioni.c.sala]).where(and_(biglietti.c.cliente==bindparam("email"),
@@ -258,6 +277,9 @@ def posti_cliente_query(email):
     res=res.fetchall()
     return res
 
+############################################# Query ricerca film
+
+#ritorna il titolo del film con questo id
 def titolo_film_query(idFilm):
     conn=engine.connect()
     s=select([film.c.titolo]).where(film.c.idFilm==bindparam("film"))
@@ -269,6 +291,7 @@ def titolo_film_query(idFilm):
     conn.close()
     return res[0]["titolo"]
 
+#ritorna l'orario, il titolo del film, la sala della proiezione con questo id
 def orarioFilm_proiezione_query(id_proiezione):
     conn=engine.connect()
     s=select([proiezioni.c.orario,film.c.titolo,proiezioni.c.sala]).where(and_(proiezioni.c.idProiezione==bindparam("proiez"),proiezioni.c.film==film.c.idFilm))
@@ -280,7 +303,8 @@ def orarioFilm_proiezione_query(id_proiezione):
     conn.close()
     return res[0]
 
-def proiezioni_film_query(id_film): #Ritorna le proiezioni future del film con id id_film
+#Ritorna le proiezioni future del film con id id_film
+def proiezioni_film_query(id_film):
     conn=engine.connect()
     s=select([proiezioni]).where(and_(proiezioni.c.film==film.c.idFilm,film.c.idFilm==bindparam('id'),proiezioni.c.orario>datetime.now(),
                 sale.c.idSala==proiezioni.c.sala,sale.c.disponibile))
@@ -291,7 +315,8 @@ def proiezioni_film_query(id_film): #Ritorna le proiezioni future del film con i
         raise EmptyResultException
     return res
 
-def film_titolo_query(titoloFilm): #data una stringa titoloFilm ritorna i film che hanno come titolo una stringa che contiene al suo interno titoloFilm (titoloFilm e' sottostringa)
+#data una stringa titoloFilm ritorna i film che hanno come titolo una stringa che contiene al suo interno titoloFilm (titoloFilm e' sottostringa)
+def film_titolo_query(titoloFilm):
     conn=engine.connect()
     s=select([film]).where(film.c.titolo.contains(bindparam('titolo')))
     res=conn.execute(s,titolo=titoloFilm)
@@ -301,10 +326,12 @@ def film_titolo_query(titoloFilm): #data una stringa titoloFilm ritorna i film c
         raise  EmptyResultException
     return res
 
-def deleteDup(x): #data una lista ritorna una lista senza duplicati
+#data una lista ritorna una lista senza duplicati
+def deleteDup(x):
   return list(dict.fromkeys(x))
 
-def film_genere_query(genereFilm): #ritorna i film che hanno come genere il genere ricevuto in input (genereFilm)
+#ritorna i film che hanno come genere il genere ricevuto in input (genereFilm)
+def film_genere_query(genereFilm):
     conn=engine.connect()
     s=select([film]).where(and_(generi.c.film==film.c.idFilm,generi.c.genere==bindparam('genere')))
     res=conn.execute(s,genere=genereFilm)
@@ -316,14 +343,17 @@ def film_genere_query(genereFilm): #ritorna i film che hanno come genere il gene
         raise  EmptyResultException
     return res
 
+#ritorna i posti liberi della proiezione con questo id
 def postiLiberi_proiezione_query(id_proiezione):
     conn=engine.connect()
+    #controllo che la sala sia ancora disponibile
     s=select([sale.c.disponibile]).where(and_(proiezioni.c.idProiezione==bindparam('id'),sale.c.idSala==proiezioni.c.sala))
     res=conn.execute(s,id=id_proiezione)
     res=res.fetchall()
     if(len(res)==0 or (not res[0]["disponibile"])):
         conn.close()
         raise ResultException
+    #controllo che la proiezione non sia gia' passata
     s=select([proiezioni.c.orario]).where(proiezioni.c.idProiezione==bindparam('id'))
     res=conn.execute(s,id=id_proiezione)
     res=res.fetchall()
@@ -331,35 +361,34 @@ def postiLiberi_proiezione_query(id_proiezione):
         conn.close()
         raise ResultException
 
-
+    #Per ora tutto ok
+    #Prendo i posti totali della sala della proiezione
     s=select([sale.c.numPosti]).where(and_(proiezioni.c.idProiezione==bindparam('id'),sale.c.idSala==proiezioni.c.sala))
     res=conn.execute(s,id=id_proiezione)
+    #Prendo i posti gia' acquistati per quella proiezione
     postiTotali=res.fetchone()["numPosti"]
     s=select([biglietti.c.posto]).where(biglietti.c.proiezione==bindparam('id'))
     res=conn.execute(s,id=id_proiezione)
     list=res.fetchall()
     list= [x["posto"] for x in list]
-    list= [x for x in range(0,postiTotali) if x not in list]
+    list= [x for x in range(0,postiTotali) if x not in list] #creo la lista di posti liberi
     conn.close()
-    if(len(list)==0):
+    if(len(list)==0):#Errore: non ci sono posti liberi
         raise EmptyResultException
     return list
 
-def compra_biglietto_query(posto,id_proiezione,email):  #TRANSAZIONI ED ECCEZIONI SPECIFICHE
+#crea un nuovo biglietto, con questo posto (posto), per questa proiezione(id_proiezione) e per questo utente (email)
+def compra_biglietto_query(posto,id_proiezione,email):
+    #E' necessaria una transazione, perche' devo effettura in successione una lettura ed una scrittura nel database. L'eventuale concorrenza di questa operazione
+    #potrebbe generare problemi (lost update, fantasmi)
     conn=engine.connect()
-    s=select([biglietti.c.posto]).where(biglietti.c.proiezione==bindparam('id')) #USO DELLA FUNZIONE POSTI LIBERI
-    res=conn.execute(s,id=id_proiezione)
-    list=res.fetchall()
-    list= [x["posto"] for x in list]
-    if(posto in list):
-       raise RuntimeError("Query Error")
     trans=conn.begin()
 
     try:
-        if(posto in postiLiberi_proiezione_query(id_proiezione)):
+        if(posto in postiLiberi_proiezione_query(id_proiezione)): #Errore : posto gia' acquistato
             raise ResultException
         ins=biglietti.insert()
-        conn.execute(ins,[{"posto":posto,"proiezione":id_proiezione,"cliente":email}])
+        conn.execute(ins,[{"posto":posto,"proiezione":id_proiezione,"cliente":email}]) #Creo nuovo biglietto
         trans.commit()
         conn.close()
     except:
@@ -369,6 +398,8 @@ def compra_biglietto_query(posto,id_proiezione,email):  #TRANSAZIONI ED ECCEZION
 
 def statisticheTitolo_query(titolo):
     conn=engine.connect()
+    #lancio la query per restituire l'eccezione se non ho film con quel titolo
+    film_titolo_query(titolo)
     q1=select([func.count().label("nproiezioni")]).where(and_(film.c.idFilm==proiezioni.c.film,film.c.titolo.contains(bindparam('titolo'))))
     q2=select([func.count().label("nbiglietti")]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.idProiezione==biglietti.c.proiezione,film.c.titolo.contains(bindparam('titolo'))))
     q3=select([func.sum(proiezioni.c.prezzo).label("guadagno")]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.idProiezione==biglietti.c.proiezione,film.c.titolo.contains(bindparam('titolo'))))
@@ -383,9 +414,13 @@ def statisticheTitolo_query(titolo):
     else:
         result={'Numero Proiezioni':nproiezioni[0]["nproiezioni"], 'Numero Biglietti venduti':nbiglietti[0]["nbiglietti"],'Guadagno totale':ricavo[0]["guadagno"]}
     return result
+    conn.close()
+
 
 def statisticheGenere_query(genere):
     conn=engine.connect()
+    #lancio la query per restituire l'eccezione se non ho film con quel genere
+    film_genere_query(genere)
     q1=select([func.count().label("nproiezioni")]).where(and_(film.c.idFilm==proiezioni.c.film,film.c.idFilm==generi.c.film,generi.c.genere==bindparam('genere')))
     q2=select([func.count().label("nbiglietti")]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.idProiezione==biglietti.c.proiezione,film.c.idFilm==generi.c.film,generi.c.genere==bindparam('genere')))
     q3=select([func.sum(proiezioni.c.prezzo).label("guadagno")]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.idProiezione==biglietti.c.proiezione,film.c.idFilm==generi.c.film,generi.c.genere==bindparam('genere')))
@@ -403,6 +438,8 @@ def statisticheGenere_query(genere):
 
 def statisticheProvincia_query(prov):
     conn=engine.connect()
+    #lancio la query per restituire l'eccezione se non ho utenti di quella provincia
+    province_prov_query(prov)
     q1=select([func.count().label("nbiglietti")]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.idProiezione==biglietti.c.proiezione,biglietti.c.cliente==utenti.c.email,utenti.c.provincia==bindparam('provincia')))
     q2=select([func.sum(proiezioni.c.prezzo).label("guadagno")]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.idProiezione==biglietti.c.proiezione,biglietti.c.cliente==utenti.c.email,utenti.c.provincia==bindparam('provincia')))
     res=conn.execute(q1,provincia=prov)
@@ -421,12 +458,12 @@ def aggiungi_film_query(titolo,anno,regista,genere,durata):
     trans=conn.begin()
     try:
         #inserisco il film
-        ins=film.insert()
-        conn.execute(ins,[{"titolo":titolo,"anno":anno,"regista":regista,"minuti":durata}])
+        #ins=film.insert()
+        #conn.execute(ins,[{"titolo":titolo,"anno":anno,"regista":regista,"minuti":durata}])
         #inserisco i generi del film
-        for value in genere:
-            ins=generi.insert()
-            conn.execute(ins,[{"genere":value}])
+        #for value in genere:
+        #    ins=generi.insert()
+        #    conn.execute(ins,[{"genere":value}])
         #trovo l'id successivo del film
         q1=select([func.count().label("id")]).select_from(film)
         res=conn.execute(q1)

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "amministra_base.html" %}
 
 {% block pageblock%}
 <h1>Inserisci un film</h1>
@@ -11,7 +11,10 @@
             <option value="{{value}}">{{value}}</option>
             {% endfor %}
          </select>
-  Durata:<input name="minuti" type="text">
+  Durata:<input name="minuti" type="number">
   <input type="submit">
+  {% if titolo is defined %}
+    <h5>Il film {{titolo}} e' stato creato.</h5>
+  {% endif %}
 </form>
 {% endblock %}
