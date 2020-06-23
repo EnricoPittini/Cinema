@@ -277,7 +277,7 @@ def aggiungi_utente_gestore_query(email,pwd,nomeUtente,annoNascita,sesso,provinc
 def posti_cliente_query(email):
     conn=engine.connect()
     s=select([biglietti.c.posto,proiezioni.c.orario,film.c.titolo,proiezioni.c.sala,film.c.minuti]).where(and_(biglietti.c.cliente==bindparam("email"),
-                proiezioni.c.idProiezione==biglietti.c.proiezione,film.c.idFilm==proiezioni.c.film,proiezioni.c.orario>datetime.now()))
+                proiezioni.c.idProiezione==biglietti.c.proiezione,film.c.idFilm==proiezioni.c.film,proiezioni.c.orario>datetime.now())).order_by(proiezioni.c.orario)
     res=conn.execute(s,email=email)
     res=res.fetchall()
     return res
@@ -312,7 +312,7 @@ def infoProiezione_query(id_proiezione):
 def proiezioni_film_query(id_film):
     conn=engine.connect()
     s=select([proiezioni,film.c.titolo,film.c.minuti]).where(and_(proiezioni.c.film==film.c.idFilm,film.c.idFilm==bindparam('id'),proiezioni.c.orario>datetime.now(),
-                sale.c.idSala==proiezioni.c.sala,sale.c.disponibile))
+                sale.c.idSala==proiezioni.c.sala,sale.c.disponibile)).order_by(proiezioni.c.orario)
     res=conn.execute(s,id=id_film)
     res=res.fetchall()
     conn.close()

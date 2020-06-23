@@ -139,7 +139,7 @@ def ricercaPerTitoloFilms():
         res=film_titolo_query(titolo) #funzione che ritorna i film con quel titolo
         return render_template("filmRicercati.html",listaFIlm=res,titolo=titolo)
     except EmptyResultException:
-        return render_template("erroreRisultato.html",message="La ricerca non ha prodotto alcun risultato")
+        return render_template("erroreRisultato.html",message="La ricerca non ha prodotto alcun risultato",percorsoPrec=request.path)
 
 #route dove si mostrano le proiezioni future del film selezionato
 #In questa route si arriva sia dalla ricerca per titolo che dalla ricerca per genere (e' il punto di incontro)
@@ -150,7 +150,7 @@ def mostraProiezioniFilm(id_film):
         #titolo=titolo_film_query(id_film) #funzione che ritorna il titolo del film. Cio' serve per mostrarlo nella pagina html
         return render_template("proiezioniFilm.html",listaProiezioni=res,titolo=res[0]["titolo"],durata=res[0]["minuti"])
     except EmptyResultException:
-        return render_template("erroreRisultato.html",message="Non ci sono proiezioni per questo film")
+        return render_template("erroreRisultato.html",message="Non ci sono proiezioni per questo film",percorsoPrec=request.path)
 
 #route dove si mostrano i posti liberi della proiezione selezionata
 @app.route("/proiezioni/<id_proiezione>")
@@ -168,9 +168,9 @@ def mostraPostiProiezione(id_proiezione):
         print(numFile,numPosti/numFile)
         return render_template("postiProiezione.html",listaPostiLiberi=res,id_pro=id_proiezione,proiezFilm=proiezFilm,f=numFile,c=numPosti/numFile)
     except EmptyResultException:
-        return render_template("erroreRisultato.html",message="Non ci sono posti liberi")
+        return render_template("erroreRisultato.html",message="Non ci sono posti liberi",percorsoPrec=request.path)
     except ResultException:
-        return render_template("erroreRisultato.html",message="La proiezione non e' attualmente disponibile")
+        return render_template("erroreRisultato.html",message="La proiezione non e' attualmente disponibile",percorsoPrec=request.path)
 
 #route dove si effettua l'acquisto del posto selezionato
 @app.route("/proiezioni/<id_proiezione>/<posto>")
@@ -182,7 +182,7 @@ def confermaAcquistoPosto(id_proiezione,posto):
         compra_biglietto_query(posto,id_proiezione,current_user.get_id()) #funzione che crea un nuovo biglietto, con quel posto per quella proiezione e per quell'utente
         return render_template("acquistoPosto.html",id_pro=id_proiezione,posto=posto,proiezFilm=proiezFilm)
     except (ResultException,EmptyResultException):
-        return render_template("erroreRisultato.html",message="Si e' verificato un errore nell'acquistare il posto")
+        return render_template("erroreRisultato.html",message="Si e' verificato un errore nell'acquistare il posto",percorsoPrec=request.path)
 
 #route per ricercare film per genere
 @app.route("/ricerca/perGenere")
@@ -197,7 +197,7 @@ def ricercaPerGenereFilms(genereFilm):
         res=film_genere_query(genereFilm) #funzione che ritorna tutti i film con quel genere
         return render_template("filmRicercati.html",listaFIlm=res,genere=genereFilm)
     except EmptyResultException:
-        return render_template("erroreRisultato.html",message="Non ci sono film con genere "+genereFilm)
+        return render_template("erroreRisultato.html",message="Non ci sono film con genere "+genereFilm,percorsoPrec=request.path)
 
 ########################################################################
 #PARTE gestore
