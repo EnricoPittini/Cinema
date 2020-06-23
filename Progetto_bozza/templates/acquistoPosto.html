@@ -2,6 +2,10 @@
 
 {% block pageblock %}
 <p> <strong> Acquisto effettuato correttamente </strong> </p><br>
-<p> Film <strong> {{proiezFilm["titolo"]}}</strong> Sala <strong>{{proiezFilm["sala"]}} </strong> Orario <strong> {{proiezFilm["orario"]}} </strong> Posto <strong> {{posto}} </strong> </p><br>
+Film <strong> {{proiezFilm["titolo"]}}</strong><br>
+Orario <strong> {{proiezFilm["orario"]}} </strong><br>
+Durata <strong> {{proiezFilm["minuti"]}} </strong><br>
+Sala <strong>{{proiezFilm["sala"]}} </strong><br>
+Posto <strong> {{posto}} </strong><br><br>
 Clicca <a href={{url_for("mostraPostiProiezione",id_proiezione=id_pro)}}>qui</a> per acquistarne un altro.
 {% endblock %}

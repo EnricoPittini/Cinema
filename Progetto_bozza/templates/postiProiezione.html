@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 
 {% block pageblock %}
-Film <strong>{{proiezFilm["titolo"]}}</strong> Orario <strong>{{proiezFilm["orario"]}}</strong> Sala <strong>{{proiezFilm["sala"]}} </strong>
+Film <strong>{{proiezFilm["titolo"]}}</strong> <br>
+Orario <strong>{{proiezFilm["orario"]}}</strong> <br>
+Durata <strong>{{proiezFilm["minuti"]}}</strong> minuti<br>
+Sala <strong>{{proiezFilm["sala"]}} </strong> <br>
 Prezzo <strong>{{proiezFilm["prezzo"]}}</strong><br><br>
 Clicca su un posto per acquistarlo
 <table border="1px" style="text-align:center">

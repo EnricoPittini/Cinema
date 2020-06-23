@@ -297,9 +297,9 @@ def titolo_film_query(idFilm):
     return res[0]["titolo"]
 
 #ritorna l'orario, il titolo del film, la sala e la durata della proiezione con questo id
-def orarioFilm_proiezione_query(id_proiezione):
+def infoProiezione_query(id_proiezione):
     conn=engine.connect()
-    s=select([proiezioni.c.orario,film.c.titolo,proiezioni.c.sala,proiezioni.c.prezzo]).where(and_(proiezioni.c.idProiezione==bindparam("proiez"),proiezioni.c.film==film.c.idFilm))
+    s=select([proiezioni.c.orario,film.c.titolo,proiezioni.c.sala,proiezioni.c.prezzo,film.c.minuti]).where(and_(proiezioni.c.idProiezione==bindparam("proiez"),proiezioni.c.film==film.c.idFilm))
     res=conn.execute(s,proiez=id_proiezione)
     res=res.fetchall()
     if(len(res)==0):
@@ -311,7 +311,7 @@ def orarioFilm_proiezione_query(id_proiezione):
 #Ritorna le proiezioni future del film con id id_film
 def proiezioni_film_query(id_film):
     conn=engine.connect()
-    s=select([proiezioni,film.c.titolo]).where(and_(proiezioni.c.film==film.c.idFilm,film.c.idFilm==bindparam('id'),proiezioni.c.orario>datetime.now(),
+    s=select([proiezioni,film.c.titolo,film.c.minuti]).where(and_(proiezioni.c.film==film.c.idFilm,film.c.idFilm==bindparam('id'),proiezioni.c.orario>datetime.now(),
                 sale.c.idSala==proiezioni.c.sala,sale.c.disponibile))
     res=conn.execute(s,id=id_film)
     res=res.fetchall()

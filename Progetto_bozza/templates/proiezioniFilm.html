@@ -1,21 +1,22 @@
 {% extends "base.html" %}
 
 {% block pageblock %}
-Sono state trovate le seguenti proiezioni per il film selezionato.<br>
+Film <strong>{{titolo}}</strong><br>
+Durata <strong>{{durata}}</strong> minuti<br><br><br>
 Clicca sull'orario per procedere all'acquisto di un posto <br>
 <table border="1px" style="text-align:center">
     <tr>
       <th>Orario</th>
+      <th>Durata</th>
       <th>Sala</th>
       <th>Prezzo</th>
-      <th>Film</th>
     </tr>
     {% for proiezione in listaProiezioni %}
       <tr>
         <td><a href={{url_for("mostraPostiProiezione",id_proiezione=proiezione["idProiezione"],acquistato=False)}}>{{proiezione["orario"]}}</a></td>
+        <td>{{proiezione["minuti"]}}</td>
         <td>{{proiezione["sala"]}}</td>
         <td>{{proiezione["prezzo"]}}</td>
-        <td>{{proiezione["titolo"]}}</td>
       </tr>
     {% endfor %}
 </table>

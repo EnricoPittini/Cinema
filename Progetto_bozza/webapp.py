@@ -148,7 +148,7 @@ def mostraProiezioniFilm(id_film):
     try:
         res=proiezioni_film_query(id_film) #funzione che ritorna la lista di proiezioni future di quel film
         #titolo=titolo_film_query(id_film) #funzione che ritorna il titolo del film. Cio' serve per mostrarlo nella pagina html
-        return render_template("proiezioniFilm.html",listaProiezioni=res)
+        return render_template("proiezioniFilm.html",listaProiezioni=res,titolo=res[0]["titolo"],durata=res[0]["minuti"])
     except EmptyResultException:
         return render_template("erroreRisultato.html",message="Non ci sono proiezioni per questo film")
 
@@ -158,7 +158,7 @@ def mostraPostiProiezione(id_proiezione):
     if(not current_user.is_authenticated):
         return render_template("nonAutenticato.html")
     try:
-        proiezFilm=orarioFilm_proiezione_query(id_proiezione) #funzione che ritorna il titolo, l'orario e la sala di questa proiezione
+        proiezFilm=infoProiezione_query(id_proiezione) #funzione che ritorna il titolo, l'orario e la sala di questa proiezione
                                                               #Sono tutti dati che mi servono per mostrarli nella pagina html
         res=postiLiberi_proiezione_query(id_proiezione) #ritorna la lista di posti occupati di questa proiezione
         numPosti,numFile=numPostiFile_salaProiezione_query(id_proiezione)
@@ -177,7 +177,7 @@ def mostraPostiProiezione(id_proiezione):
 @login_required
 def confermaAcquistoPosto(id_proiezione,posto):
     try:
-        proiezFilm=orarioFilm_proiezione_query(id_proiezione) #funzione che ritorna il titolo, l'orario e la sala di questa proiezione
+        proiezFilm=infoProiezione_query(id_proiezione) #funzione che ritorna il titolo, l'orario e la sala di questa proiezione
                                                               #Sono tutti dati che mi servono per mostrarli nella pagina html
         compra_biglietto_query(posto,id_proiezione,current_user.get_id()) #funzione che crea un nuovo biglietto, con quel posto per quella proiezione e per quell'utente
         return render_template("acquistoPosto.html",id_pro=id_proiezione,posto=posto,proiezFilm=proiezFilm)
