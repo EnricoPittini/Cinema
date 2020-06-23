@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block pageblock %}
+Scrivi il titolo del film che vuoi cercare <br>
 <form action="/ricerca/perTitolo/films" method="POST">
   <input name="titolo" type="text">
   <input type="submit">

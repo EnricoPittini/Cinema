@@ -1,11 +1,31 @@
 {% extends "base.html" %}
 
 {% block pageblock %}
-Ecco i posti liberi per la proiezione del film {{proiezFilm["titolo"]}} con orario {{proiezFilm["orario"]}} e sala {{proiezFilm["sala"]}} <br>
+Film <strong>{{proiezFilm["titolo"]}}</strong> Orario <strong>{{proiezFilm["orario"]}}</strong> Sala <strong>{{proiezFilm["sala"]}} </strong>
+Prezzo <strong>{{proiezFilm["prezzo"]}}</strong><br><br>
 Clicca su un posto per acquistarlo
-<ul>
-  {% for p in listaPostiLiberi %}
-  <li><a href={{url_for("confermaAcquistoPosto",id_proiezione=id_pro,posto=p)}}>{{ p }}</a></li>
+<table border="1px" style="text-align:center">
+<!--  <tr>
+    {% for i in range(0,f) %}
+    <th>Fila{{i}}</th>
+    {% endfor %}
+  </tr>
+  -->
+    {% for i in range(0,f) %}
+    <tr>
+    <th>Fila{{i}}</th>
+    {% for j in range(0,c) %}
+    {% if i*c+j in listaPostiLiberi %}
+    <td><a href={{url_for("confermaAcquistoPosto",id_proiezione=id_pro,posto=i*c+j)}}>{{  i*c+j }}</a></td>
+    {% else %}
+    <td>{{i*c+j}}</td>
+    {% endif %}
+    {% endfor %}
+    </tr>
   {% endfor %}
-</ul>
+</table>
+<br><br><br>
+{% if acquistato %}
+Posto acquistato correttamente!
+{% endif %}
 {% endblock %}

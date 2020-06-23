@@ -9,7 +9,7 @@ class ResultException(Exception):
     pass
 
 ###################################################
-engine=create_engine("postgres://matteo:matteofacci@localhost:5432/cinema")
+engine=create_engine("postgres://enrico:alessandro@localhost:5432/cinema")
 metadata=MetaData()
 utenti=Table("Utenti",metadata,Column("email",String,primary_key=True)
                               ,Column("nomeUtente",String,nullable=False)
@@ -29,6 +29,7 @@ generi=Table("GeneriFilm",metadata,Column("genere",String)
                                   ,PrimaryKeyConstraint("genere","film"))
 sale=Table("Sale",metadata,Column("idSala",Integer,primary_key=True)
                           ,Column("numPosti",Integer,CheckConstraint("\"numPosti\">=10"),nullable=False)
+                          ,Column("numFile",Integer,CheckConstraint("\"numFile\">=1 AND \"numPosti\"%\"numFile\"=0"),nullable=False)
                           ,Column("disponibile",Boolean,nullable=False))
 proiezioni=Table("Proiezioni",metadata,Column("idProiezione",Integer,primary_key=True)
                                       ,Column("orario",DateTime,CheckConstraint("orario >= '1970-01-01'::date"),nullable=False)
@@ -43,8 +44,9 @@ biglietti=Table("Biglietti",metadata,Column("posto",Integer,CheckConstraint("pos
 
 metadata.create_all(engine)
 
-"""conn=engine.connect()
-ins=utenti.insert()
+
+conn=engine.connect()
+"""ins=utenti.insert()
 res=conn.execute(select([utenti]))
 for r in res.fetchall():
     print(r)
@@ -102,11 +104,12 @@ conn.execute(ins,[{"genere":"Drammatico","film":1},
                   {"genere":"Thriller","film":14},
                   {"genere":"Noir","film":14}])
 ins=sale.insert()
-conn.execute(ins,[{"idSala":1,"numPosti":50,"disponibile":True},
-                 {"idSala":2,"numPosti":25,"disponibile":True},
-                 {"idSala":3,"numPosti":25,"disponibile":False},
-                 {"idSala":4,"numPosti":75,"disponibile":True},
-                 {"idSala":5,"numPosti":100,"disponibile":True}])
+conn.execute(ins,[{"idSala":1,"numPosti":50,"numFile":10,"disponibile":True},
+                 {"idSala":2,"numPosti":25,"numFile":5,"disponibile":True},
+                 {"idSala":3,"numPosti":25,"numFile":5,"disponibile":False},
+                 {"idSala":4,"numPosti":75,"numFile":5,"disponibile":True},
+                 {"idSala":5,"numPosti":100,"numFile":10,"disponibile":True}])
+
 ins=proiezioni.insert()
 conn.execute(ins,[{"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":1,"sala":1},
                   {"orario":datetime(2018,6,17,16,45),"prezzo":10.0,"film":1,"sala":2},
@@ -224,6 +227,8 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
         sesso="M"
     elif("femmina" in sesso):
         sesso="F"
+    else:
+        raise ResultException
     conn=engine.connect()
     trans=conn.begin()
     try:
@@ -271,7 +276,7 @@ def aggiungi_utente_gestore_query(email,pwd,nomeUtente,annoNascita,sesso,provinc
 #Oltre ai posti, ritorna anche l'orario,il titolo e la sala della proiezione relativa
 def posti_cliente_query(email):
     conn=engine.connect()
-    s=select([biglietti.c.posto,proiezioni.c.orario,film.c.titolo,proiezioni.c.sala]).where(and_(biglietti.c.cliente==bindparam("email"),
+    s=select([biglietti.c.posto,proiezioni.c.orario,film.c.titolo,proiezioni.c.sala,film.c.minuti]).where(and_(biglietti.c.cliente==bindparam("email"),
                 proiezioni.c.idProiezione==biglietti.c.proiezione,film.c.idFilm==proiezioni.c.film,proiezioni.c.orario>datetime.now()))
     res=conn.execute(s,email=email)
     res=res.fetchall()
@@ -291,10 +296,10 @@ def titolo_film_query(idFilm):
     conn.close()
     return res[0]["titolo"]
 
-#ritorna l'orario, il titolo del film, la sala della proiezione con questo id
+#ritorna l'orario, il titolo del film, la sala e la durata della proiezione con questo id
 def orarioFilm_proiezione_query(id_proiezione):
     conn=engine.connect()
-    s=select([proiezioni.c.orario,film.c.titolo,proiezioni.c.sala]).where(and_(proiezioni.c.idProiezione==bindparam("proiez"),proiezioni.c.film==film.c.idFilm))
+    s=select([proiezioni.c.orario,film.c.titolo,proiezioni.c.sala,proiezioni.c.prezzo]).where(and_(proiezioni.c.idProiezione==bindparam("proiez"),proiezioni.c.film==film.c.idFilm))
     res=conn.execute(s,proiez=id_proiezione)
     res=res.fetchall()
     if(len(res)==0):
@@ -306,7 +311,7 @@ def orarioFilm_proiezione_query(id_proiezione):
 #Ritorna le proiezioni future del film con id id_film
 def proiezioni_film_query(id_film):
     conn=engine.connect()
-    s=select([proiezioni]).where(and_(proiezioni.c.film==film.c.idFilm,film.c.idFilm==bindparam('id'),proiezioni.c.orario>datetime.now(),
+    s=select([proiezioni,film.c.titolo]).where(and_(proiezioni.c.film==film.c.idFilm,film.c.idFilm==bindparam('id'),proiezioni.c.orario>datetime.now(),
                 sale.c.idSala==proiezioni.c.sala,sale.c.disponibile))
     res=conn.execute(s,id=id_film)
     res=res.fetchall()
@@ -363,19 +368,31 @@ def postiLiberi_proiezione_query(id_proiezione):
 
     #Per ora tutto ok
     #Prendo i posti totali della sala della proiezione
-    s=select([sale.c.numPosti]).where(and_(proiezioni.c.idProiezione==bindparam('id'),sale.c.idSala==proiezioni.c.sala))
-    res=conn.execute(s,id=id_proiezione)
+    #s=select([sale.c.numPosti]).where(and_(proiezioni.c.idProiezione==bindparam('id'),sale.c.idSala==proiezioni.c.sala))
+    #res=conn.execute(s,id=id_proiezione)
+    #postiTotali=res.fetchone()["numPosti"]
     #Prendo i posti gia' acquistati per quella proiezione
-    postiTotali=res.fetchone()["numPosti"]
     s=select([biglietti.c.posto]).where(biglietti.c.proiezione==bindparam('id'))
     res=conn.execute(s,id=id_proiezione)
     list=res.fetchall()
-    list= [x["posto"] for x in list]
-    list= [x for x in range(0,postiTotali) if x not in list] #creo la lista di posti liberi
+    if(len(list)>0):
+        list=[x["posto"] for x in list]
+    #list= [x["posto"] for x in list]
+    #list= [x for x in range(0,postiTotali) if x not in list] #creo la lista di posti liberi
     conn.close()
-    if(len(list)==0):#Errore: non ci sono posti liberi
-        raise EmptyResultException
+    #if(len(list)==0):#Errore: non ci sono posti liberi
+    #    raise EmptyResultException
     return list
+
+def numPostiFile_salaProiezione_query(idProiezione):
+    conn=engine.connect()
+    s=select([sale.c.numPosti,sale.c.numFile]).where(and_(proiezioni.c.idProiezione==bindparam('id'),sale.c.idSala==proiezioni.c.sala))
+    res=conn.execute(s,id=idProiezione)
+    res=res.fetchone()
+    conn.close()
+    if(res is None):
+        raise ResultException
+    return res["numPosti"],res["numFile"]
 
 #crea un nuovo biglietto, con questo posto (posto), per questa proiezione(id_proiezione) e per questo utente (email)
 def compra_biglietto_query(posto,id_proiezione,email):
@@ -493,7 +510,7 @@ def aggiungi_sala_query(nposti):
         #creo la nuova sala
         ins=sale.insert()
         conn.execute(ins,[{"numPosti":nposti,"disponibile":False}])
-        conn.execute(ins,[{"idSala":id[0]["id"]+1,"numPosti":nposti,"disponibile":False}])
+        #conn.execute(ins,[{"idSala":id[0]["id"]+1,"numPosti":nposti,"disponibile":False}])
         trans.commit()
         conn.close()
         sala=id[0]["id"]+1

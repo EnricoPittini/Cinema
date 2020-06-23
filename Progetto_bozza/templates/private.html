@@ -6,10 +6,23 @@ Clicca <a href="/ricerca">qui</a> per ricercare film <br>
 Clicca <a href="/logout">qui</a> per eseguire il logout <br><br><br>
 {% if posti %}
 Ricordati dei tuoi posti acquistati!
-<ul>
-  {% for p in posti %}
-  <li> POSTO:{{p["posto"]}}    ORARIO:{{p["orario"]}}    SALA:{{p["sala"]}}   FILM:{{p["titolo"]}} </li>
-  {% endfor %}
-</ul>
+<table border="1px" style="text-align:center">
+    <tr>
+      <th>Posto</th>
+      <th>Orario</th>
+      <th>Sala</th>
+      <th>Film</th>
+      <th>Durata</th>
+    </tr>
+    {% for p in posti %}
+      <tr>
+        <td>{{p["posto"]}}</td>
+        <td>{{p["orario"]}}</td>
+        <td>{{p["sala"]}}</td>
+        <td>{{p["titolo"]}}</td>
+        <td>{{p["minuti"]}}</td>
+      </tr>
+    {% endfor %}
+</table>
 {% endif %}
 {% endblock %}

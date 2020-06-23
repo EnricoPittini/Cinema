@@ -1,4 +1,3 @@
-import numpy as np
 from flask import Flask,render_template,redirect,url_for,request
 from database import *
 from flask_login import LoginManager,UserMixin,login_required,login_user,logout_user,current_user
@@ -78,7 +77,8 @@ def private(email):
     try:
         usr=user_email_query(email) #Ritorna l'utente con quell'email
         posti=posti_cliente_query(email) #Ritorna i posti acquistati da questo utente, relativi a proiezioni future
-                                         #Oltre ai posti ci sono anche l'orario, il titolo e la sala della proiezione relativa a questi posti
+                                         #Oltre ai posti ci sono anche l'orario, il titolo , la sala e la durata della proiezione relativa a questi posti
+        print(posti)
         if(current_user.isGestore()):
             return render_template("privateGestore.html",nome=usr["nomeUtente"])
         elif(len(posti)==0):
@@ -147,8 +147,8 @@ def ricercaPerTitoloFilms():
 def mostraProiezioniFilm(id_film):
     try:
         res=proiezioni_film_query(id_film) #funzione che ritorna la lista di proiezioni future di quel film
-        titolo=titolo_film_query(id_film) #funzione che ritorna il titolo del film. Cio' serve per mostrarlo nella pagina html
-        return render_template("proiezioniFilm.html",listaProiezioni=res,film=titolo)
+        #titolo=titolo_film_query(id_film) #funzione che ritorna il titolo del film. Cio' serve per mostrarlo nella pagina html
+        return render_template("proiezioniFilm.html",listaProiezioni=res)
     except EmptyResultException:
         return render_template("erroreRisultato.html",message="Non ci sono proiezioni per questo film")
 
@@ -160,12 +160,17 @@ def mostraPostiProiezione(id_proiezione):
     try:
         proiezFilm=orarioFilm_proiezione_query(id_proiezione) #funzione che ritorna il titolo, l'orario e la sala di questa proiezione
                                                               #Sono tutti dati che mi servono per mostrarli nella pagina html
-        res=postiLiberi_proiezione_query(id_proiezione) #ritorna la lista di posti liberi di questa proiezione
-        return render_template("postiProiezione.html",listaPostiLiberi=res,id_pro=id_proiezione,proiezFilm=proiezFilm)
+        res=postiLiberi_proiezione_query(id_proiezione) #ritorna la lista di posti occupati di questa proiezione
+        numPosti,numFile=numPostiFile_salaProiezione_query(id_proiezione)
+        print(numPosti,numFile)
+        #res=[x for x in res]
+        res=[x for x in range(0,numPosti) if x not in res]
+        print(numFile,numPosti/numFile)
+        return render_template("postiProiezione.html",listaPostiLiberi=res,id_pro=id_proiezione,proiezFilm=proiezFilm,f=numFile,c=numPosti/numFile)
     except EmptyResultException:
         return render_template("erroreRisultato.html",message="Non ci sono posti liberi")
     except ResultException:
-        return render_template("erroreRisultato.html",message="La proiezione non e' piu' attualmente disponibile")
+        return render_template("erroreRisultato.html",message="La proiezione non e' attualmente disponibile")
 
 #route dove si effettua l'acquisto del posto selezionato
 @app.route("/proiezioni/<id_proiezione>/<posto>")
