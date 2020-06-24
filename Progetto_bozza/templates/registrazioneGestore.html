@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block pageblock %}
+Inserisci un nuovo utente gestore:<br><br>
+<form action="/creaGestore" method="POST">
+  <div>
+    <label>Email:</label><br>
+    <input name="email" type="text"><br>
+    <label>Nome utente:</label><br>
+    <input name="userName" type="text"><br>
+    <label>Password:</label><br>
+    <input name="pwd" type="password"><br>
+    <label>Provincia:</label><br>
+    <input name="prov" type="text"><br>
+    <label>Anno di nascita:</label><br>
+    <input name="annoNascita" type="text"><br>
+    <label>Sesso:</label><br>
+    <input name="sesso" type="text"><br>
+    <input type="submit">
+  </div>
+</form>
+{% if utente %}
+  <h5>L'utente {{utente}} e' stato creato ed ora e' un nuovo gestore.</h5>
+{% endif %}
+{% endblock %}

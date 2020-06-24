@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func
-from datetime import datetime
+from datetime import datetime,timedelta
 #from exceptions import EmptyResultException
 ############################################## Eccezioni definite da me per gestire meglio gli errori
 class EmptyResultException(Exception):
@@ -9,7 +9,7 @@ class ResultException(Exception):
     pass
 
 ###################################################
-engine=create_engine("postgres://enrico:alessandro@localhost:5432/cinema")
+engine=create_engine("postgres://matteo:matteofacci@localhost:5432/cinema")
 metadata=MetaData()
 utenti=Table("Utenti",metadata,Column("email",String,primary_key=True)
                               ,Column("nomeUtente",String,nullable=False)
@@ -44,9 +44,10 @@ biglietti=Table("Biglietti",metadata,Column("posto",Integer,CheckConstraint("pos
 
 metadata.create_all(engine)
 
-
+"""
 conn=engine.connect()
-"""ins=utenti.insert()
+
+ins=utenti.insert()
 res=conn.execute(select([utenti]))
 for r in res.fetchall():
     print(r)
@@ -103,6 +104,7 @@ conn.execute(ins,[{"genere":"Drammatico","film":1},
                   {"genere":"Avventura","film":13},
                   {"genere":"Thriller","film":14},
                   {"genere":"Noir","film":14}])
+
 ins=sale.insert()
 conn.execute(ins,[{"idSala":1,"numPosti":50,"numFile":10,"disponibile":True},
                  {"idSala":2,"numPosti":25,"numFile":5,"disponibile":True},
@@ -132,7 +134,7 @@ conn.execute(ins,[{"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":1,"sal
                   {"orario":datetime(2014,10,4,21,30),"prezzo":9.5,"film":5,"sala":3},
                   {"orario":datetime(2013,10,4,21,30),"prezzo":9.5,"film":5,"sala":3},
                   {"orario":datetime(2013,11,4,21,30),"prezzo":9.5,"film":5,"sala":4},
-                 {"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":6,"sala":1},
+                  {"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":6,"sala":1},
                   {"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":6,"sala":1},
                   {"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":6,"sala":1},
                   {"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":7,"sala":1},
@@ -142,10 +144,8 @@ conn.execute(ins,[{"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":1,"sal
                   {"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":1,"sala":1},
                   {"orario":datetime(2019,4,15,20,30),"prezzo":10.5,"film":2,"sala":1},
                   {"orario":datetime(2019,5,10,23,30),"prezzo":9.5,"film":6,"sala":2}])
-
-
-conn.close()"""
-
+conn.close()
+"""
 ######################################### Query per login e registrazione
 def user_email_query(usr_email):
     conn = engine.connect()
@@ -217,7 +217,7 @@ def sale_query():
 
 def proiezioni_future_query():
     conn = engine.connect()
-    res = conn.execute(select([proiezioni.c.idProiezione,proiezioni.c.orario,proiezioni.c.prezzo,film.c.titolo]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>=datetime.now())))
+    res = conn.execute(select([proiezioni.c.idProiezione,proiezioni.c.orario,proiezioni.c.prezzo,film.c.titolo]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>=datetime.now(),sale.c.idSala==proiezioni.c.sala,sale.c.disponibile)))
     conn.close()
     return res
 
@@ -238,7 +238,6 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
         res=conn.execute(s,eml=email)
         res=res.fetchall()
         if(len(res)!=0):
-            print(len(res))
             raise ResultException
         ins=utenti.insert()
         conn.execute(ins,[{"email":email,"nomeUtente":nomeUtente,"pwd":pwd,"annoNascita":annoNascita,"sesso":sesso,"provincia":provincia,"gestore":False}])
@@ -261,7 +260,6 @@ def aggiungi_utente_gestore_query(email,pwd,nomeUtente,annoNascita,sesso,provinc
         res=conn.execute(s,eml=email)
         res=res.fetchall()
         if(len(res)!=0):
-            print(len(res))
             raise ResultException
         ins=utenti.insert()
         conn.execute(ins,[{"email":email,"nomeUtente":nomeUtente,"pwd":pwd,"annoNascita":annoNascita,"sesso":sesso,"provincia":provincia,"gestore":True}])
@@ -340,7 +338,6 @@ def film_genere_query(genereFilm):
     conn=engine.connect()
     s=select([film]).where(and_(generi.c.film==film.c.idFilm,generi.c.genere==bindparam('genere')))
     res=conn.execute(s,genere=genereFilm)
-    print(res)
     res=res.fetchall()
     print(res)
     conn.close()
@@ -372,6 +369,7 @@ def postiLiberi_proiezione_query(id_proiezione):
     #res=conn.execute(s,id=id_proiezione)
     #postiTotali=res.fetchone()["numPosti"]
     #Prendo i posti gia' acquistati per quella proiezione
+
     s=select([biglietti.c.posto]).where(biglietti.c.proiezione==bindparam('id'))
     res=conn.execute(s,id=id_proiezione)
     list=res.fetchall()
@@ -474,14 +472,6 @@ def aggiungi_film_query(titolo,anno,regista,genere,durata):
     conn=engine.connect()
     trans=conn.begin()
     try:
-        #inserisco il film
-        #ins=film.insert()
-        #conn.execute(ins,[{"titolo":titolo,"anno":anno,"regista":regista,"minuti":durata}])
-        #inserisco i generi del film
-        #for value in genere:
-        #    ins=generi.insert()
-        #    conn.execute(ins,[{"genere":value}])
-        #trovo l'id successivo del film
         q1=select([func.count().label("id")]).select_from(film)
         res=conn.execute(q1)
         id=res.fetchall()
@@ -499,7 +489,7 @@ def aggiungi_film_query(titolo,anno,regista,genere,durata):
         conn.close()
         raise ResultException
 
-def aggiungi_sala_query(nposti):
+def aggiungi_sala_query(nposti,nfile):
     conn=engine.connect()
     trans=conn.begin()
     try:
@@ -509,8 +499,7 @@ def aggiungi_sala_query(nposti):
         id=res.fetchall()
         #creo la nuova sala
         ins=sale.insert()
-        conn.execute(ins,[{"numPosti":nposti,"disponibile":False}])
-        #conn.execute(ins,[{"idSala":id[0]["id"]+1,"numPosti":nposti,"disponibile":False}])
+        conn.execute(ins,[{"numPosti":nposti,"numFile":nfile,"disponibile":False}])
         trans.commit()
         conn.close()
         sala=id[0]["id"]+1
@@ -520,27 +509,35 @@ def aggiungi_sala_query(nposti):
         conn.close()
         raise ResultException
 
-def aggiungi_proiezione_query(film,sala,orario,prezzo):
+def aggiungi_proiezione_query(idFilm,sala,orario,prezzo):
     conn=engine.connect()
     trans=conn.begin()
-    try:
-        #trovo se ho film allo stesso orario
-        #TODO
-        q1=select([proiezioni.c.film]).where(and_(proiezioni.c.sala==sale.c.idSala,sale.c.idSala==bindparam('sala'),proiezioni.c.orario<bindparam('orario')))
-        res=conn.execute(q1,sala=sala,orario=orario)
-        filmstessoorario=res.fetchall()
-        list=[x["film"] for x in filmstessoorario]
-        if(len(list)>0):
-            return render_template("erroreRisultato.html",message="Proiezione gia' presente nello stesso giorno alla stessa ora")
+    #try:
+    #trasformo la richiesta dell'orario in un datetime
+    anno=orario[0:4]
+    mese=orario[5:7]
+    giorno=orario[8:10]
+    ora=orario[11:13]
+    minuti=orario[14:16]
+    orario=datetime(int(anno),int(mese),int(giorno),int(ora),int(minuti))
+    #trovo se ho film nell'arco di tempo in cui voglio inserire la proiezione
+    q1=select([film.c.titolo]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.sala==sale.c.idSala,sale.c.idSala==bindparam('sala'),proiezioni.c.orario<orario,orario<(proiezioni.c.orario+timedelta(hours=3))))
+    res=conn.execute(q1,sala=sala)
+    filmstessoorario=res.fetchall()
+    list=[x["titolo"] for x in filmstessoorario]
+    if(list is not None and len(list)>0):
+        return list
+    else:
         #inserisco la nuova proiezione
         ins=proiezioni.insert()
-        conn.execute(ins,[{"film":film,"sala":sala,"prezzo":prezzo,"orario":orario}])
+        conn.execute(ins,[{"film":idFilm,"sala":sala,"prezzo":prezzo,"orario":orario}])
         trans.commit()
         conn.close()
-    except:
+    """except:
         trans.rollback()
         conn.close()
-        raise ResultException
+        raise ResultException"""
+
 
 def gestisci_sale_query(listasaledisponibili):
     conn=engine.connect()
@@ -568,7 +565,7 @@ def delete_proiezione_query(proiezione):
     conn=engine.connect()
     trans=conn.begin()
     try:
-        deleteproiezione=proiezioni.delete().where(and_(proiezioni.c.idProiezione==bindparam('proiezione'),proiezione.c.sala==sale.c.idSala,sale.c.disponibile==True))
+        deleteproiezione=proiezioni.delete().where(and_(proiezioni.c.idProiezione==bindparam('proiezione'),proiezioni.c.sala==sale.c.idSala,sale.c.disponibile==True))
         res=conn.execute(deleteproiezione,proiezione=proiezione)
         trans.commit()
         conn.close()
