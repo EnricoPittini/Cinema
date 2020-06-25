@@ -5,15 +5,9 @@ Film <strong>{{proiezFilm["titolo"]}}</strong> <br>
 Orario <strong>{{proiezFilm["orario"]}}</strong> <br>
 Durata <strong>{{proiezFilm["minuti"]}}</strong> minuti<br>
 Sala <strong>{{proiezFilm["sala"]}} </strong> <br>
-Prezzo <strong>{{proiezFilm["prezzo"]}}</strong><br><br>
+Prezzo <strong>{{proiezFilm["prezzo"]}}</strong> euro<br><br>
 Clicca su un posto per acquistarlo
 <table border="1px" style="text-align:center">
-<!--  <tr>
-    {% for i in range(0,f) %}
-    <th>Fila{{i}}</th>
-    {% endfor %}
-  </tr>
-  -->
     {% for i in range(0,f) %}
     <tr>
     <th>Fila{{i}}</th>
@@ -28,7 +22,4 @@ Clicca su un posto per acquistarlo
   {% endfor %}
 </table>
 <br><br><br>
-{% if acquistato %}
-Posto acquistato correttamente!
-{% endif %}
 {% endblock %}

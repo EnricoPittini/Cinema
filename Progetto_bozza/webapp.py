@@ -1,4 +1,3 @@
-import numpy as np
 from flask import Flask,render_template,redirect,url_for,request
 from database import *
 from flask_login import LoginManager,UserMixin,login_required,login_user,logout_user,current_user
@@ -49,27 +48,33 @@ def home():
     return render_template("home.html")
 
 #route per il login dell'utente
-@app.route("/login")
+"""@app.route("/login")
 def login():
     if(current_user.is_authenticated):
         return redirect(url_for("private",email=current_user.get_id()))
-    return render_template("login.html")
+    return render_template("login.html")"""
 
 #route per il login dell'utente
-@app.route("/login/Proc",methods=['POST'])
-def loginProc():
-    try:
-        email=request.form["email"]
-        pwd=request.form["pwd"]
-        usr=user_email_query(email) #Ritorna l'utente con quell'email
-        if(usr["pwd"]==pwd):
-            user=load_user(email)
-            login_user(user)
-            return redirect(url_for("private",email=email))
-        else:
-            raise InvalidLoginException
-    except (EmptyResultException,InvalidLoginException):  ##########altra exception
-        return render_template("invalidLogin.html")
+@app.route("/login",methods=["GET",'POST'])
+def login():
+    if(current_user.is_authenticated):
+        return redirect(url_for("private",email=current_user.get_id()))
+
+    if request.method == "POST":
+        try:
+            email=request.form["email"]
+            pwd=request.form["pwd"]
+            usr=user_email_query(email) #Ritorna l'utente con quell'email
+            if(usr["pwd"]==pwd):
+                user=load_user(email)
+                login_user(user)
+                return redirect(url_for("private",email=email))
+            else:
+                raise InvalidLoginException
+        except (EmptyResultException,InvalidLoginException):  ##########altra exception
+            return render_template("erroreRisultato.html",message="Errore login",percorsoPrec=request.referrer)
+    else:
+        return render_template("login.html")
 
 #route dell'area privata del cliente
 @app.route("/private/<email>")
@@ -87,7 +92,7 @@ def private(email):
         else:
             return render_template("private.html",nome=usr["nomeUtente"],posti=posti)
     except EmptyResultException:
-        return render_template("invalidLogin.html")
+        return render_template("erroreRisultato.html",message="Errore login",percorsoPrec=request.referrer)
 
 #route per effettuare il logout
 @app.route('/logout')
@@ -97,108 +102,131 @@ def logout():
     return redirect(url_for('home'))
 
 #route per creare un nuovo cliente
-@app.route("/registrazione")
+"""@app.route("/registrazione")
 def registrazione():
     if(current_user.is_authenticated):
         return redirect(url_for("private",email=current_user.get_id()))
-    return render_template("registrazione.html")
+    return render_template("registrazione.html")"""
 
 #route per elaborare i dati del form di registrazione
-@app.route("/registrazione/Proc",methods=['POST'])
-def registrazioneProc():
-    email=request.form["email"]
-    pwd=request.form["pwd"]
-    userName=request.form["userName"]
-    prov=request.form["prov"]
-    annoNascita=request.form["annoNascita"]
-    sesso=request.form["sesso"]
-    try:
-        aggiungi_utente_query(email,pwd,userName,annoNascita,sesso,prov) #funzione che crea un nuovo utente (E' un cliente)
-        user=load_user(email)
-        login_user(user)
-        return redirect(url_for("private",email=email))
-    except (ResultException,EmptyResultException):   ##########altra exception
-        return render_template("invalidRegistration.html")
+@app.route("/registrazione",methods=["GET",'POST'])
+def registrazione():
+    if(current_user.is_authenticated):
+        return redirect(url_for("private",email=current_user.get_id()))
+
+    if request.method == "POST":
+        email=request.form["email"]
+        pwd=request.form["pwd"]
+        userName=request.form["userName"]
+        prov=request.form["prov"]
+        annoNascita=request.form["annoNascita"]
+        sesso=request.form["sesso"]
+        try:
+            aggiungi_utente_query(email,pwd,userName,annoNascita,sesso,prov) #funzione che crea un nuovo utente (E' un cliente)
+            user=load_user(email)
+            login_user(user)
+            return redirect(url_for("private",email=email))
+        except (ResultException,EmptyResultException):   ##########altra exception
+            return render_template("erroreRisultato.html",message="Errore registrazione",percorsoPrec=request.referrer)
+    else:
+        return render_template("registrazione.html")
 
 ############################################################ROUTES PER LA RICERCA DI FILM
 
 #route principale della ricerca
 @app.route("/ricerca")
 def ricerca():
+    if current_user.is_authenticated and current_user.isGestore():
+        return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
     return render_template("ricerca.html")
 
 #route per ricercare un film tramite titolo
-@app.route("/ricerca/perTitolo")
+"""@app.route("/ricerca/perTitolo")
 def ricercaPerTitolo():
-    return render_template("ricercaPerTitolo.html")
+    if current_user.is_authenticated and current_user.isGestore():
+        return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
+    return render_template("ricercaPerTitolo.html",percorsoPrec=request.referrer)"""
 
 #route dove si mostrano i film trovati con quel titolo
-@app.route("/ricerca/perTitolo/films" , methods=["POST"])
+@app.route("/ricerca/perTitolo" , methods=["GET","POST"])
 def ricercaPerTitoloFilms():
-    titolo = request.form["titolo"]
-    try:
-        res=film_titolo_query(titolo) #funzione che ritorna i film con quel titolo
-        return render_template("filmRicercati.html",listaFIlm=res,titolo=titolo)
-    except EmptyResultException:
-        return render_template("erroreRisultato.html",message="La ricerca non ha prodotto alcun risultato",percorsoPrec=request.path)
+    if current_user.is_authenticated and current_user.isGestore():
+        return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
+
+    if request.method == "POST":
+        titolo = request.form["titolo"]
+        try:
+            res=film_titolo_query(titolo) #funzione che ritorna i film con quel titolo
+            return render_template("filmRicercati.html",listaFIlm=res,titolo=titolo,percorsoPrec=request.referrer)
+        except EmptyResultException:
+            return render_template("erroreRisultato.html",message="La ricerca non ha prodotto alcun risultato",percorsoPrec=request.referrer)
+    else:
+        return render_template("ricercaPerTitolo.html",percorsoPrec=request.referrer)
 
 #route dove si mostrano le proiezioni future del film selezionato
 #In questa route si arriva sia dalla ricerca per titolo che dalla ricerca per genere (e' il punto di incontro)
 @app.route("/films/<id_film>")
 def mostraProiezioniFilm(id_film):
+    if current_user.is_authenticated and current_user.isGestore():
+        return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
     try:
         res=proiezioni_film_query(id_film) #funzione che ritorna la lista di proiezioni future di quel film
         #titolo=titolo_film_query(id_film) #funzione che ritorna il titolo del film. Cio' serve per mostrarlo nella pagina html
-        return render_template("proiezioniFilm.html",listaProiezioni=res,titolo=res[0]["titolo"],durata=res[0]["minuti"])
+        return render_template("proiezioniFilm.html",listaProiezioni=res,percorsoPrec=request.referrer)
     except EmptyResultException:
-        return render_template("erroreRisultato.html",message="Non ci sono proiezioni per questo film",percorsoPrec=request.path)
+        return render_template("erroreRisultato.html",message="Non ci sono proiezioni per questo film",percorsoPrec=request.referrer)
 
 #route dove si mostrano i posti liberi della proiezione selezionata
 @app.route("/proiezioni/<id_proiezione>")
 def mostraPostiProiezione(id_proiezione):
     if(not current_user.is_authenticated):
         return render_template("nonAutenticato.html")
+    elif( current_user.isGestore()):
+        return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
     try:
         proiezFilm=infoProiezione_query(id_proiezione) #funzione che ritorna il titolo, l'orario e la sala di questa proiezione
         #Sono tutti dati che mi servono per mostrarli nella pagina html
-        res=postiLiberi_proiezione_query(id_proiezione) #ritorna la lista di posti occupati di questa proiezione
+        res=postiOccupati_proiezione_query(id_proiezione) #ritorna la lista di posti occupati di questa proiezione
         numPosti,numFile=numPostiFile_salaProiezione_query(id_proiezione)
-        print(numPosti,numFile)
-        #res=[x for x in res]
         res=[x for x in range(0,numPosti) if x not in res]
-        print(numFile,numPosti/numFile)
-        return render_template("postiProiezione.html",listaPostiLiberi=res,id_pro=id_proiezione,proiezFilm=proiezFilm,f=numFile,c=numPosti/numFile)
+        return render_template("postiProiezione.html",listaPostiLiberi=res,id_pro=id_proiezione,proiezFilm=proiezFilm,f=numFile,c=numPosti/numFile,percorsoPrec=request.referrer)
     except EmptyResultException:
-        return render_template("erroreRisultato.html",message="Non ci sono posti liberi",percorsoPrec=request.path)
+        return render_template("erroreRisultato.html",message="Non ci sono posti liberi",percorsoPrec=request.referrer)
     except ResultException:
-        return render_template("erroreRisultato.html",message="La proiezione non e' attualmente disponibile",percorsoPrec=request.path)
+        return render_template("erroreRisultato.html",message="La proiezione non e' attualmente disponibile",percorsoPrec=request.referrer)
 
 #route dove si effettua l'acquisto del posto selezionato
 @app.route("/proiezioni/<id_proiezione>/<posto>")
 @login_required
 def confermaAcquistoPosto(id_proiezione,posto):
+    if current_user.isGestore():
+        return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
     try:
         proiezFilm=infoProiezione_query(id_proiezione) #funzione che ritorna il titolo, l'orario e la sala di questa proiezione
-                                                              #Sono tutti dati che mi servono per mostrarli nella pagina html
+                                                             #Sono tutti dati che mi servono per mostrarli nella pagina html
         compra_biglietto_query(posto,id_proiezione,current_user.get_id()) #funzione che crea un nuovo biglietto, con quel posto per quella proiezione e per quell'utente
         return render_template("acquistoPosto.html",id_pro=id_proiezione,posto=posto,proiezFilm=proiezFilm)
     except (ResultException,EmptyResultException):
-        return render_template("erroreRisultato.html",message="Si e' verificato un errore nell'acquistare il posto",percorsoPrec=request.path)
+        return render_template("erroreRisultato.html",message="Si e' verificato un errore nell'acquistare il posto",percorsoPrec=request.referrer)
 
 #route per ricercare film per genere
 @app.route("/ricerca/perGenere")
 def ricercaPerGenere():
+    if current_user.is_authenticated and current_user.isGestore():
+        return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
     res=generi_query() #funzione che ritorna tutti i possibili generi
-    return render_template("ricercaPerGenere.html",listaGeneri=res)
+    return render_template("ricercaPerGenere.html",listaGeneri=res,percorsoPrec=request.referrer)
 
 #route dove si mostrano i film con quel genere
 @app.route("/ricerca/perGenere/<genereFilm>")
 def ricercaPerGenereFilms(genereFilm):
+    if current_user.is_authenticated and current_user.isGestore():
+        return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
     try:
         res=film_genere_query(genereFilm) #funzione che ritorna tutti i film con quel genere
-        return render_template("filmRicercati.html",listaFIlm=res,genere=genereFilm)
+        return render_template("filmRicercati.html",listaFIlm=res,genere=genereFilm,percorsoPrec=request.referrer)
     except EmptyResultException:
-        return render_template("erroreRisultato.html",message="Non ci sono film con genere "+genereFilm,percorsoPrec=request.path)
+        return render_template("erroreRisultato.html",message="Non ci sono film con genere "+genereFilm,percorsoPrec=request.referrer)
 
 ########################################################################
 #PARTE gestore

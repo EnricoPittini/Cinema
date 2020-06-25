@@ -9,7 +9,7 @@ class ResultException(Exception):
     pass
 
 ###################################################
-engine=create_engine("postgres://matteo:matteofacci@localhost:5432/cinema")
+engine=create_engine("postgres://enrico:alessandro@localhost:5432/cinema")
 metadata=MetaData()
 utenti=Table("Utenti",metadata,Column("email",String,primary_key=True)
                               ,Column("nomeUtente",String,nullable=False)
@@ -275,7 +275,7 @@ def aggiungi_utente_gestore_query(email,pwd,nomeUtente,annoNascita,sesso,provinc
 def posti_cliente_query(email):
     conn=engine.connect()
     s=select([biglietti.c.posto,proiezioni.c.orario,film.c.titolo,proiezioni.c.sala,film.c.minuti]).where(and_(biglietti.c.cliente==bindparam("email"),
-                proiezioni.c.idProiezione==biglietti.c.proiezione,film.c.idFilm==proiezioni.c.film,proiezioni.c.orario>datetime.now())).order_by(proiezioni.c.orario)
+                proiezioni.c.idProiezione==biglietti.c.proiezione,film.c.idFilm==proiezioni.c.film,proiezioni.c.orario>datetime.now())).order_by(proiezioni.c.orario,biglietti.c.posto)
     res=conn.execute(s,email=email)
     res=res.fetchall()
     return res
@@ -294,7 +294,7 @@ def titolo_film_query(idFilm):
     conn.close()
     return res[0]["titolo"]
 
-#ritorna l'orario, il titolo del film, la sala e la durata della proiezione con questo id
+#ritorna l'orario, il titolo del film, la sala, il prezzo e la durata della proiezione con questo id
 def infoProiezione_query(id_proiezione):
     conn=engine.connect()
     s=select([proiezioni.c.orario,film.c.titolo,proiezioni.c.sala,proiezioni.c.prezzo,film.c.minuti]).where(and_(proiezioni.c.idProiezione==bindparam("proiez"),proiezioni.c.film==film.c.idFilm))
@@ -345,23 +345,26 @@ def film_genere_query(genereFilm):
         raise  EmptyResultException
     return res
 
-#ritorna i posti liberi della proiezione con questo id
-def postiLiberi_proiezione_query(id_proiezione):
+#ritorna i posti occupati della proiezione con questo id
+def postiOccupati_proiezione_query(id_proiezione):
     conn=engine.connect()
-    #controllo che la sala sia ancora disponibile
-    s=select([sale.c.disponibile]).where(and_(proiezioni.c.idProiezione==bindparam('id'),sale.c.idSala==proiezioni.c.sala))
+    #controllo che la sala sia ancora disponibile e che la proiezione non sia gia' passata
+    s=select([sale.c.disponibile,sale.c.numPosti,proiezioni.c.orario]).where(and_(proiezioni.c.idProiezione==bindparam('id'),sale.c.idSala==proiezioni.c.sala))
     res=conn.execute(s,id=id_proiezione)
-    res=res.fetchall()
-    if(len(res)==0 or (not res[0]["disponibile"])):
+    res=res.fetchone()
+    if(len(res)==0 or (not res["disponibile"]) or res["orario"]<datetime.now()):
         conn.close()
         raise ResultException
-    #controllo che la proiezione non sia gia' passata
-    s=select([proiezioni.c.orario]).where(proiezioni.c.idProiezione==bindparam('id'))
+
+    numPosti=res["numPosti"]
+
+    """s=select([proiezioni.c.orario]).where(proiezioni.c.idProiezione==bindparam('id'))
     res=conn.execute(s,id=id_proiezione)
     res=res.fetchall()
-    if(len(res)==0 or res[0]["orario"]<datetime.now()):
+    if(len(res)==0 or res["orario"]<datetime.now()):
         conn.close()
-        raise ResultException
+        raise ResultException"""
+
 
     #Per ora tutto ok
     #Prendo i posti totali della sala della proiezione
@@ -378,8 +381,9 @@ def postiLiberi_proiezione_query(id_proiezione):
     #list= [x["posto"] for x in list]
     #list= [x for x in range(0,postiTotali) if x not in list] #creo la lista di posti liberi
     conn.close()
-    #if(len(list)==0):#Errore: non ci sono posti liberi
-    #    raise EmptyResultException
+    if(len(list)>=numPosti):
+        raise EmptyResultException
+
     return list
 
 def numPostiFile_salaProiezione_query(idProiezione):
@@ -410,6 +414,13 @@ def compra_biglietto_query(posto,id_proiezione,email):
         trans.rollback()
         conn.close()
         raise ResultException
+
+
+
+def filmInVoga_query():
+    conn=engine.connect()
+
+####################################################
 
 def statisticheTitolo_query(titolo):
     conn=engine.connect()

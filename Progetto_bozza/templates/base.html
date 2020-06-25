@@ -6,5 +6,9 @@
   <a href="/"> HOME </a> <br><br><br>
   {% block pageblock %}
   {% endblock %}
+  <br><br><br>
+  {% if percorsoPrec %}
+  Clicca <a href={{percorsoPrec}}>qui</a> per tornare alla pagine precedente
+  {% endif %}
 </body>
 </html>

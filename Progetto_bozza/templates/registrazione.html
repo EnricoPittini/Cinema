@@ -2,13 +2,22 @@
 
 {% block pageblock %}
 Inserisci email, nome utente, password, provincia, anno nascita e sesso (maschio o femmina):
-<form action="/registrazione/Proc" method="POST">
-  <input name="email" type="text">
-  <input name="userName" type="text">
-  <input name="pwd" type="password">
-  <input name="prov" type="text">
-  <input name="annoNascita" type="text">
-  <input name="sesso" type="text">
-  <input type="submit">
+<form action="/registrazione" method="POST">
+  <div>
+    <label>Email:</label><br>
+    <input name="email" type="text"><br>
+    <label>Nome utente:</label><br>
+    <input name="userName" type="text"><br>
+    <label>Password:</label><br>
+    <input name="pwd" type="password"><br>
+    <label>Provincia:</label><br>
+    <input name="prov" type="text"><br>
+    <label>Anno di nascita:</label><br>
+    <input name="annoNascita" type="text"><br>
+    <label>Sesso:</label><br>
+    <input name="sesso" type="text"><br>
+    <input type="submit">
+  </div>
 </form>
+
 {% endblock %}
