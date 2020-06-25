@@ -21,5 +21,8 @@
   Prezzo:<input name="prezzo" type="text">
   <input type="submit">
 </form>
+{% if (film is defined) and (orario is defined) and (sala is defined) %}
+<h5>La proiezione di {{film}} nella sala {{sala}} nel giorno e ora {{orario}} e' stata inserita.</h5>
+{% endif %}
 
 {% endblock %}

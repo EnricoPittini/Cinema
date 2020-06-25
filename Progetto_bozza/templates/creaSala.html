@@ -4,7 +4,10 @@
 <h1>Crea una nuova sala</h1>
 <h4>Attenzione: la nuova sala di default e' impostata non disponibile</h4>
 <form action="/creaSala" method="POST">
-  Posti:<input name="posti" type="number">
+  Posti:<br>
+  <input name="posti" type="number"><br>
+  Numero di file:<br>
+  <input name="file" type="number"><br>
   <input type="submit">
 </form>
 {% if method == "POST" %}

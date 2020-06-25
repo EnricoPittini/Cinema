@@ -1,3 +1,4 @@
+import numpy as np
 from flask import Flask,render_template,redirect,url_for,request
 from database import *
 from flask_login import LoginManager,UserMixin,login_required,login_user,logout_user,current_user
@@ -77,7 +78,7 @@ def private(email):
     try:
         usr=user_email_query(email) #Ritorna l'utente con quell'email
         posti=posti_cliente_query(email) #Ritorna i posti acquistati da questo utente, relativi a proiezioni future
-                                         #Oltre ai posti ci sono anche l'orario, il titolo , la sala e la durata della proiezione relativa a questi posti
+                                         #Oltre ai posti ci sono anche l'orario, il titolo e la sala della proiezione relativa a questi posti
         print(posti)
         if(current_user.isGestore()):
             return render_template("privateGestore.html",nome=usr["nomeUtente"])
@@ -159,7 +160,7 @@ def mostraPostiProiezione(id_proiezione):
         return render_template("nonAutenticato.html")
     try:
         proiezFilm=infoProiezione_query(id_proiezione) #funzione che ritorna il titolo, l'orario e la sala di questa proiezione
-                                                              #Sono tutti dati che mi servono per mostrarli nella pagina html
+        #Sono tutti dati che mi servono per mostrarli nella pagina html
         res=postiLiberi_proiezione_query(id_proiezione) #ritorna la lista di posti occupati di questa proiezione
         numPosti,numFile=numPostiFile_salaProiezione_query(id_proiezione)
         print(numPosti,numFile)
@@ -203,6 +204,7 @@ def ricercaPerGenereFilms(genereFilm):
 #PARTE gestore
 ########################################################################
 
+################### STATISTICHE
 @app.route("/statistiche")
 @login_required
 def statistiche():
@@ -253,6 +255,7 @@ def statisticheProvincia():
         else:
             return render_template("statistichePerProvincia.html",province=province_query())
 
+################### CREA GESTORE
 @app.route("/creaGestore",methods=['GET','POST'])
 @login_required
 def creaGestore():
@@ -268,12 +271,13 @@ def creaGestore():
                 annoNascita=request.form["annoNascita"]
                 sesso=request.form["sesso"]
                 aggiungi_utente_gestore_query(email,pwd,userName,annoNascita,sesso,prov)
-                return render_template("registrazione.html")
+                return render_template("registrazioneGestore.html",utente=request.form["userName"])
             except ResultException:
                 return render_template("erroreRisultato.html",message="Non e' stato possibile creare un account gestore")
         else:
-            return render_template("registrazione.html")
+            return render_template("registrazioneGestore.html")
 
+################### AMMINISTRA
 @app.route("/amministra")
 @login_required
 def amministra():
@@ -294,9 +298,12 @@ def creaFilm():
                 anno=request.form["anno"]
                 regista=request.form["regista"]
                 minuti=request.form["minuti"]
-                genere=request.form.getlist('generi')
-                aggiungi_film_query(titolo,anno,regista,genere,minuti)
-                return render_template("creaFilm.html",genere=generi_query(),titolo=titolo)
+                if(minuti<1 or anno<1970):
+                    return render_template("erroreRisultato.html",message="La durata di un film deve essere maggiore o uguale a 1 e l'anno deve essere maggiore di 1970.")
+                else:
+                    genere=request.form.getlist('generi')
+                    aggiungi_film_query(titolo,anno,regista,genere,minuti)
+                    return render_template("creaFilm.html",genere=generi_query(),titolo=titolo)
             except ResultException:
                 return render_template("erroreRisultato.html",message="Non e' stato possibile inserire un film con questi valori")
         else:
@@ -309,9 +316,17 @@ def creaSala():
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
         if(request.method == 'POST'):
-            posti=request.form["posti"]
-            nsala=aggiungi_sala_query(posti)
-            return render_template("creaSala.html",nsala=nsala,method="POST")
+            try:
+                posti=request.form["posti"]
+                file=request.form["file"]
+                #se i valori di nposti o nfile sono <0 allora ritorno un'eccezione
+                if(int(posti)<10 or (int(file)<1) or (int(posti)%int(file)!=0)):
+                    return render_template("erroreRisultato.html",message="Creare una sala a queste condizioni: numero dei posti>0, numero delle file>1 e posti%file deve essere 0")
+                else:
+                    nsala=aggiungi_sala_query(posti,file)
+                    return render_template("creaSala.html",nsala=nsala,method="POST")
+            except ResultException:
+                return render_template("erroreRisultato.html",message="Non e' stato possibile inserire una sala con questi valori")
         else:
             return render_template("creaSala.html")
 
@@ -343,19 +358,25 @@ def aggiungiProiezione():
                 sala=request.form["sale"]
                 orario=request.form["orario"]
                 prezzo=request.form["prezzo"]
-                aggiungi_proiezione_query(film,sala,orario,prezzo)
-                return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_query())
+                listafilm=aggiungi_proiezione_query(film,sala,orario,prezzo)
+                if(listafilm is not None and len(listafilm)>0):
+                    return render_template("erroreRisultato.html",message="Impossibile completare l'operazione: proiezioni gia' presenti durante lo stesso orario")
+                else:
+                    titolo=titolo_film_query(film)
+                    return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_query(),film=titolo,sala=sala,orario=orario)
             except ResultException:
-                return render_template("erroreRisultato.html",message="Non e' stato possibile inserire una proiezione con questi valori")
+                return render_template("erroreRisultato.html",message="Impossibile effettuare l'operazione al momento")
         else:
             return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_query())
 
-@app.route("/eliminaProiezioneFutura")
+@app.route("/eliminaProiezioneFutura",methods=['GET','POST'])
 @login_required
 def eliminaProiezioneFutura():
     if current_user.isGestore() is False:
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
+        if(request.method == 'POST'):
+            return render_template("eliminaProiezione.html",proiezioni=proiezioni_future_query())
         return render_template("eliminaProiezione.html",proiezioni=proiezioni_future_query())
 
 @app.route("/eliminaProiezioneFutura/<proiezione>")
@@ -364,4 +385,4 @@ def eliminaProiezioneFuturaProc(proiezione):
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
     else:
         delete_proiezione_query(proiezione)
-        return url_for("eliminaProiezioneFutura")
+        return redirect(url_for("eliminaProiezioneFutura"))
