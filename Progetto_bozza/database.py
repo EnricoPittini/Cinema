@@ -217,7 +217,7 @@ def sale_query():
 
 def proiezioni_future_query():
     conn = engine.connect()
-    res = conn.execute(select([proiezioni.c.idProiezione,proiezioni.c.orario,proiezioni.c.prezzo,film.c.titolo]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>=datetime.now())))
+    res = conn.execute(select([proiezioni.c.idProiezione,proiezioni.c.orario,proiezioni.c.prezzo,film.c.titolo]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>=datetime.now(),sale.c.idSala==proiezioni.c.sala,sale.c.disponibile)))
     conn.close()
     return res
 
