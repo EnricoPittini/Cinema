@@ -530,59 +530,70 @@ def aggiungi_sala_query(nposti,nfile):
 def aggiungi_proiezione_query(idFilm,sala,orario,prezzo):
     conn=engine.connect()
     trans=conn.begin()
-    #try:
-    #trasformo la richiesta dell'orario in un datetime
-    anno=orario[0:4]
-    mese=orario[5:7]
-    giorno=orario[8:10]
-    ora=orario[11:13]
-    minuti=orario[14:16]
-    orario=datetime(int(anno),int(mese),int(giorno),int(ora),int(minuti))
-    #trovo se ho film nell'arco di tempo in cui voglio inserire la proiezione
-    q1=select([film.c.titolo]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.sala==sale.c.idSala,sale.c.idSala==bindparam('sala'),proiezioni.c.orario<orario,orario<(proiezioni.c.orario+timedelta(hours=3))))
-    res=conn.execute(q1,sala=sala)
-    filmstessoorario=res.fetchall()
-    list=[x["titolo"] for x in filmstessoorario]
-    if(list is not None and len(list)>0):
-        return list
-    else:
-        #inserisco la nuova proiezione
-        ins=proiezioni.insert()
-        conn.execute(ins,[{"film":idFilm,"sala":sala,"prezzo":prezzo,"orario":orario}])
-        trans.commit()
-        conn.close()
-    """except:
-        trans.rollback()
-        conn.close()
-        raise ResultException"""
-
-
-def gestisci_sale_query(listasaledisponibili):
-    conn=engine.connect()
-    trans=conn.begin()
     try:
-        listasale=sale_query()
-        #setto tutte le sale che non ho selezionato non disponibili
-        listasalenondisponibili = [i for i in listasale if i not in listasaledisponibili]
-        #imposto le sale non disponibili
-        for value in listasalenondisponibili:
-            q=sale.update().values(disponibile=False).where(sale.c.idSala==bindparam('sala'))
-            res=conn.execute(q,sala=value)
-        #rendo sale disponibili
-        for value in listasaledisponibili:
-            q=sale.update().values(disponibile=True).where(sale.c.idSala==bindparam('sala'))
-            res=conn.execute(q,sala=value)
-        trans.commit()
-        conn.close()
+        #trasformo la richiesta dell'orario in un datetime
+        anno=orario[0:4]
+        mese=orario[5:7]
+        giorno=orario[8:10]
+        ora=orario[11:13]
+        minuti=orario[14:16]
+        orario=datetime(int(anno),int(mese),int(giorno),int(ora),int(minuti))
+        #trovo se ho film nell'arco di tempo in cui voglio inserire la proiezione
+        q1=select([film.c.titolo]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.sala==sale.c.idSala,sale.c.idSala==bindparam('sala'),proiezioni.c.orario<orario,orario<(proiezioni.c.orario+timedelta(hours=3))))
+        res=conn.execute(q1,sala=sala)
+        filmstessoorario=res.fetchall()
+        list=[x["titolo"] for x in filmstessoorario]
+        if(list is not None and len(list)>0):
+            return list
+        else:
+            #inserisco la nuova proiezione
+            ins=proiezioni.insert()
+            conn.execute(ins,[{"film":idFilm,"sala":sala,"prezzo":prezzo,"orario":orario}])
+            trans.commit()
+            conn.close()
     except:
         trans.rollback()
         conn.close()
         raise ResultException
 
+
+def gestisci_sale_query(listasaledisponibili):
+    conn=engine.connect()
+    trans=conn.begin()
+    #try:
+    listasale=sale_query()
+    #setto tutte le sale che non ho selezionato non disponibili
+    listasalenondisponibili = [i for i in listasale if i not in listasaledisponibili]
+    #imposto le sale non disponibili
+    for value in listasalenondisponibili:
+        #elimino le proiezioni di tutte le sale che non sono disponibili
+        deletebigliettiassociati=biglietti.delete().where(and_(biglietti.c.proiezione==proiezioni.c.idProiezione,sale.c.idSala==proiezioni.c.sala,sale.c.idSala==bindparam('sala')))
+        conn.execute(deletebigliettiassociati,sala=value)
+        #dopo aver eliminato i biglietti associati posso eliminare la proiezione
+        deleteproiezione=proiezioni.delete().where(and_(proiezioni.c.sala==sale.c.idSala,sale.c.disponibile==True,sale.c.idSala==bindparam('sala')))
+        res=conn.execute(deleteproiezione,sala=value)
+        #adesso imposto la disponibilita' della sala a false
+        q=sale.update().values(disponibile=False).where(sale.c.idSala==bindparam('sala'))
+        res=conn.execute(q,sala=value)
+    #rendo sale disponibili
+    for value in listasaledisponibili:
+        q=sale.update().values(disponibile=True).where(sale.c.idSala==bindparam('sala'))
+        res=conn.execute(q,sala=value)
+    trans.commit()
+    conn.close()
+    """except:
+        trans.rollback()
+        conn.close()
+        raise ResultException"""
+
 def delete_proiezione_query(proiezione):
     conn=engine.connect()
     trans=conn.begin()
     try:
+
+        deletebigliettiassociati=biglietti.delete().where(and_(biglietti.c.proiezione==proiezioni.c.idProiezione,proiezioni.c.idProiezione==bindparam('proiezione')))
+        conn.execute(deletebigliettiassociati,proiezione=proiezione)
+        #dopo aver eliminato i biglietti associati posso eliminare la proiezione
         deleteproiezione=proiezioni.delete().where(and_(proiezioni.c.idProiezione==bindparam('proiezione'),proiezioni.c.sala==sale.c.idSala,sale.c.disponibile==True))
         res=conn.execute(deleteproiezione,proiezione=proiezione)
         trans.commit()
