@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block pageblock %}
+Ecco i film in programmazione
+<ul>
+  {% for film in films %}
+  <li><a href={{url_for("mostraProiezioniFilm",id_film=film["idFilm"])}}>{{ film["titolo"] }}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block pageblock %}
+Seleziona la data <br>
+<form action="/ricerca/perGiorno" method="POST">
+  <input name="orario" type="date">
+  <input type="submit">
+</form>
+{% endblock %}
