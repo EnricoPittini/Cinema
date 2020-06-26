@@ -319,7 +319,7 @@ def proiezioni_giorno_query(date):
         raise ResultException
 
     conn=engine.connect()
-    s=select([proiezioni.c.orario,proiezioni.c.sala,proiezioni.c.prezzo,film.c.titolo,film.c.minuti]).where(and_(proiezioni.c.orario>oraIn,proiezioni.c.orario<oraFin,
+    s=select([proiezioni,film.c.titolo,film.c.minuti]).where(and_(proiezioni.c.orario>oraIn,proiezioni.c.orario<oraFin,
                                             film.c.idFilm==proiezioni.c.film)).order_by(proiezioni.c.orario)
     res=conn.execute(s)
     res=res.fetchall()
