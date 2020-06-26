@@ -369,7 +369,7 @@ def gestisciSala():
             #creazione lista sale disponibili
             list=[int(i) for i in request.form.getlist("mycheckbox")]
             gestisci_sale_query(list)
-            return render_template("gestisciSale.html",sale=sale_query())
+            return render_template("gestisciSale.html",sale=sale_query(),listasaledisponibili=list)
         else:
             sale=sale_query()
             return render_template("gestisciSale.html",sale=sale_query())
@@ -391,11 +391,11 @@ def aggiungiProiezione():
                     return render_template("erroreRisultato.html",message="Impossibile completare l'operazione: proiezioni gia' presenti durante lo stesso orario")
                 else:
                     titolo=titolo_film_query(film)
-                    return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_query(),film=titolo,sala=sala,orario=orario)
+                    return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_disponibili_query(),film=titolo,sala=sala,orario=orario)
             except ResultException:
                 return render_template("erroreRisultato.html",message="Impossibile effettuare l'operazione al momento")
         else:
-            return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_query())
+            return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_disponibili_query())
 
 @app.route("/eliminaProiezioneFutura",methods=['GET','POST'])
 @login_required

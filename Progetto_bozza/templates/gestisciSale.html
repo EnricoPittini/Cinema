@@ -85,5 +85,11 @@ input:checked + .slider:before {
   <br>
   <input type="submit">
 </form>
-
+{% if listasaledisponibili %}
+  <h5>Le sale
+  {% for sale in listasaledisponibili %}
+    {{sale}}
+  {% endfor %}
+  sono ora disponibili.</h5>
+{% endif %}
 {% endblock %}

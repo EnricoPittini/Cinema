@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func
+from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func,asc
 from datetime import datetime,timedelta
 #from exceptions import EmptyResultException
 ############################################## Eccezioni definite da me per gestire meglio gli errori
@@ -9,7 +9,7 @@ class ResultException(Exception):
     pass
 
 ###################################################
-engine=create_engine("postgres://enrico:alessandro@localhost:5432/cinema")
+engine=create_engine("postgres://matteo:matteofacci@localhost:5432/cinema")
 metadata=MetaData()
 utenti=Table("Utenti",metadata,Column("email",String,primary_key=True)
                               ,Column("nomeUtente",String,nullable=False)
@@ -210,7 +210,14 @@ def generi_statistiche_query(genere):
 
 def sale_query():
     conn = engine.connect()
-    res = conn.execute(select([sale.c.idSala]))
+    res = conn.execute(select([sale.c.idSala]).order_by(asc(sale.c.idSala)))
+    list=[x["idSala"] for x in res.fetchall()]
+    conn.close()
+    return list
+
+def sale_disponibili_query():
+    conn = engine.connect()
+    res = conn.execute(select([sale.c.idSala]).where(sale.c.disponibile==True).order_by(asc(sale.c.idSala)))
     list=[x["idSala"] for x in res.fetchall()]
     conn.close()
     return list
