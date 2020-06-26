@@ -138,11 +138,6 @@ def registrazione():
 def ricerca():
     if current_user.is_authenticated and current_user.isGestore():
         return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
-    filmGettonati=filmGettonati_query()
-    if(len(filmGettonati)>0):
-        filmGettonati=filmGettonati[0:10]
-        print(filmGettonati)
-        return render_template("ricerca.html",filmGettonati=filmGettonati)
     return render_template("ricerca.html")
 
 #route per ricercare un film tramite titolo
@@ -151,31 +146,6 @@ def ricercaPerTitolo():
     if current_user.is_authenticated and current_user.isGestore():
         return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
     return render_template("ricercaPerTitolo.html",percorsoPrec=request.referrer)"""
-
-@app.route("/ricerca/inProgrammazione")
-def filmInProgrammazione():
-    if current_user.is_authenticated and current_user.isGestore():
-        return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
-    films=filmInProgrammazione_query()
-    print(films)
-    if(len(films)>0):
-        return render_template("filmRicercati.html",listaFilm=films,percorsoPrec=request.referrer)
-    return render_template("erroreRisultato.html",message="Non ci sono film in programmazione",percorsoPrec=request.referrer)
-
-@app.route("/ricerca/perGiorno", methods=["GET","POST"])
-def ricercaPerGiorno():
-    if current_user.is_authenticated and current_user.isGestore():
-        return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
-
-    if request.method == "POST":
-        orario = request.form["orario"]
-        try:
-            res=proiezioni_giorno_query(orario) #funzione che ritorna le proiezioni in questo giorno
-            return render_template("proiezioniFilm.html",listaProiezioni=res,percorsoPrec=request.referrer)
-        except (ResultException,EmptyResultException):
-            return render_template("erroreRisultato.html",message="La ricerca non ha prodotto alcun risultato",percorsoPrec=request.referrer)
-    else:
-        return render_template("ricercaPerGiorno.html",percorsoPrec=request.referrer)
 
 #route dove si mostrano i film trovati con quel titolo
 @app.route("/ricerca/perTitolo" , methods=["GET","POST"])
@@ -215,7 +185,7 @@ def mostraPostiProiezione(id_proiezione):
         return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
     try:
         proiezFilm=infoProiezione_query(id_proiezione) #funzione che ritorna il titolo, l'orario e la sala di questa proiezione
-                                                    #Sono tutti dati che mi servono per mostrarli nella pagina html
+        #Sono tutti dati che mi servono per mostrarli nella pagina html
         res=postiOccupati_proiezione_query(id_proiezione) #ritorna la lista di posti occupati di questa proiezione
         numPosti,numFile=numPostiFile_salaProiezione_query(id_proiezione)
         res=[x for x in range(0,numPosti) if x not in res]
@@ -233,7 +203,7 @@ def confermaAcquistoPosto(id_proiezione,posto):
         return render_template("erroreRisultato.html",message="Devi essere un cliente per eseguire questa operazione",percorsoPrec=request.referrer)
     try:
         proiezFilm=infoProiezione_query(id_proiezione) #funzione che ritorna il titolo, l'orario e la sala di questa proiezione
-                                                          #Sono tutti dati che mi servono per mostrarli nella pagina html
+                                                             #Sono tutti dati che mi servono per mostrarli nella pagina html
         compra_biglietto_query(posto,id_proiezione,current_user.get_id()) #funzione che crea un nuovo biglietto, con quel posto per quella proiezione e per quell'utente
         return render_template("acquistoPosto.html",id_pro=id_proiezione,posto=posto,proiezFilm=proiezFilm)
     except (ResultException,EmptyResultException):

@@ -66,12 +66,20 @@ input:checked + .slider:before {
   <table border="1px" style="text-align:center;">
     <tr>
       <th>Sala</th>
+      <th>Disponibile</th>
       <th>Imposta disponibilita'</th>
     </tr>
     {% for value in sale%}
     <tr>
       <td>
-        {{value}}
+        {{value["idSala"]}}
+      </td>
+      <td>
+        {% if value["disponibile"] == True%}
+          Disponibile
+        {% else %}
+          Non disponibile
+        {% endif %}
       </td>
       <td>
         <label class="switch">

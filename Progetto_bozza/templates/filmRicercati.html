@@ -4,13 +4,12 @@
 {% block pageblock %}
 {% if titolo %}
 La tua ricerca "{{titolo}}" ha prodotto i seguenti risultati: <br>
-{% elif genere %}
+{% endif %}
+{% if genere %}
 Il genere {{genere}} ha prodotto i seguenti risultati: <br>
-{% else %}
-Ecco i film in programmazione: <br>
 {% endif %}
 <ul>
-  {% for film in listaFilm %}
+  {% for film in listaFIlm %}
   <li> <a href={{url_for("mostraProiezioniFilm",id_film=film["idFilm"])}}>{{ film["titolo"] }}</a> </li>
   {% endfor %}
 </ul>

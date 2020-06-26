@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func,asc,desc, distinct
+from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func,asc
 from datetime import datetime,timedelta
 #from exceptions import EmptyResultException
 ############################################## Eccezioni definite da me per gestire meglio gli errori
@@ -9,7 +9,7 @@ class ResultException(Exception):
     pass
 
 ###################################################
-engine=create_engine("postgres://enrico:alessandro@localhost:5432/cinema")
+engine=create_engine("postgres://matteo:matteofacci@localhost:5432/cinema")
 metadata=MetaData()
 utenti=Table("Utenti",metadata,Column("email",String,primary_key=True)
                               ,Column("nomeUtente",String,nullable=False)
@@ -210,10 +210,9 @@ def generi_statistiche_query(genere):
 
 def sale_query():
     conn = engine.connect()
-    res = conn.execute(select([sale.c.idSala]).order_by(asc(sale.c.idSala)))
-    list=[x["idSala"] for x in res.fetchall()]
+    res = conn.execute(select([sale.c.idSala,sale.c.disponibile]).order_by(asc(sale.c.idSala)))
     conn.close()
-    return list
+    return res.fetchall()
 
 def sale_disponibili_query():
     conn = engine.connect()
@@ -224,7 +223,7 @@ def sale_disponibili_query():
 
 def proiezioni_future_query():
     conn = engine.connect()
-    res = conn.execute(select([proiezioni.c.idProiezione,proiezioni.c.orario,proiezioni.c.prezzo,film.c.titolo]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>=datetime.now(),sale.c.idSala==proiezioni.c.sala,sale.c.disponibile)))
+    res = conn.execute(select([proiezioni.c.idProiezione,proiezioni.c.orario,proiezioni.c.prezzo,film.c.titolo]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>=datetime.now(),sale.c.idSala==proiezioni.c.sala,sale.c.disponibile)).order_by(asc(proiezioni.c.orario)))
     conn.close()
     return res
 
@@ -288,45 +287,6 @@ def posti_cliente_query(email):
     return res
 
 ############################################# Query ricerca film
-
-def filmGettonati_query():
-    conn=engine.connect()
-    s=select([film]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>datetime.now(),
-            biglietti.c.proiezione==proiezioni.c.idProiezione)).group_by(film.c.idFilm).order_by(desc(func.count()))
-    res=conn.execute(s)
-    res=res.fetchall()
-    conn.close()
-    return res
-
-
-def filmInProgrammazione_query():
-    conn=engine.connect()
-    s=select([film]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>datetime.now())).distinct().order_by(film.c.titolo)
-    res=conn.execute(s)
-    res=res.fetchall()
-    conn.close()
-    return res
-
-def proiezioni_giorno_query(date):
-    anno=date[0:4]
-    mese=date[5:7]
-    giorno=date[8:10]
-    oraIn=datetime(int(anno),int(mese),int(giorno),0,0)
-    oraFin=datetime(int(anno),int(mese),int(giorno),23,59)
-    print(oraIn)
-    print(oraFin)
-    if oraFin<datetime.now():
-        raise ResultException
-
-    conn=engine.connect()
-    s=select([proiezioni,film.c.titolo,film.c.minuti]).where(and_(proiezioni.c.orario>oraIn,proiezioni.c.orario<oraFin,
-                                            film.c.idFilm==proiezioni.c.film)).order_by(proiezioni.c.orario)
-    res=conn.execute(s)
-    res=res.fetchall()
-    conn.close()
-    if(len(res)<=0):
-        raise EmptyResultException
-    return res
 
 #ritorna il titolo del film con questo id
 def titolo_film_query(idFilm):
@@ -450,7 +410,7 @@ def compra_biglietto_query(posto,id_proiezione,email):
     trans=conn.begin()
 
     try:
-        if(posto in postiOccupati_proiezione_query(id_proiezione)): #Errore : posto gia' acquistato
+        if(posto in postiLiberi_proiezione_query(id_proiezione)): #Errore : posto gia' acquistato
             raise ResultException
         ins=biglietti.insert()
         conn.execute(ins,[{"posto":posto,"proiezione":id_proiezione,"cliente":email}]) #Creo nuovo biglietto
