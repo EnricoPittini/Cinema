@@ -1,6 +1,6 @@
-from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func,asc
+from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func,asc,desc, distinct
 from datetime import datetime,timedelta
-#from exceptions import EmptyResultException
+
 ############################################## Eccezioni definite da me per gestire meglio gli errori
 class EmptyResultException(Exception):
     pass
@@ -9,7 +9,7 @@ class ResultException(Exception):
     pass
 
 ###################################################
-engine=create_engine("postgres://matteo:matteofacci@localhost:5432/cinema")
+engine=create_engine("postgres://enrico:alessandro@localhost:5432/cinema")
 metadata=MetaData()
 utenti=Table("Utenti",metadata,Column("email",String,primary_key=True)
                               ,Column("nomeUtente",String,nullable=False)
@@ -147,6 +147,7 @@ conn.execute(ins,[{"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":1,"sal
 conn.close()
 """
 ######################################### Query per login e registrazione
+#Ritorna l'utente con quella mail
 def user_email_query(usr_email):
     conn = engine.connect()
     s=select([utenti]).where(utenti.c.email==bindparam("email"))
@@ -289,6 +290,47 @@ def posti_cliente_query(email):
 
 ############################################# Query ricerca film
 
+#Ritorna la lista dei film , ordinati in modo crescente per numero di biglietti relativi
+def filmGettonati_query():
+    conn=engine.connect()
+    s=select([film]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>datetime.now(),
+            biglietti.c.proiezione==proiezioni.c.idProiezione)).group_by(film.c.idFilm).order_by(desc(func.count()))
+    res=conn.execute(s)
+    res=res.fetchall()
+    conn.close()
+    return res
+
+#Ritorna la lista con tutti i film con proiezioni future
+def filmInProgrammazione_query():
+    conn=engine.connect()
+    s=select([film]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>datetime.now())).distinct().order_by(film.c.titolo)
+    res=conn.execute(s)
+    res=res.fetchall()
+    conn.close()
+    return res
+
+#Ritorna le proiezioni in quel giorno
+def proiezioni_giorno_query(date):
+    anno=date[0:4]
+    mese=date[5:7]
+    giorno=date[8:10]
+    oraIn=datetime(int(anno),int(mese),int(giorno),0,0)
+    oraFin=datetime(int(anno),int(mese),int(giorno),23,59)
+    print(oraIn)
+    print(oraFin)
+    if oraFin<datetime.now():
+        raise ResultException
+
+    conn=engine.connect()
+    s=select([proiezioni,film.c.titolo,film.c.minuti]).where(and_(proiezioni.c.orario>oraIn,proiezioni.c.orario<oraFin,
+                                            film.c.idFilm==proiezioni.c.film)).order_by(proiezioni.c.orario)
+    res=conn.execute(s)
+    res=res.fetchall()
+    conn.close()
+    if(len(res)<=0):
+        raise EmptyResultException
+    return res
+
 #ritorna il titolo del film con questo id
 def titolo_film_query(idFilm):
     conn=engine.connect()
@@ -304,7 +346,7 @@ def titolo_film_query(idFilm):
 #ritorna l'orario, il titolo del film, la sala, il prezzo e la durata della proiezione con questo id
 def infoProiezione_query(id_proiezione):
     conn=engine.connect()
-    s=select([proiezioni.c.orario,film.c.titolo,proiezioni.c.sala,proiezioni.c.prezzo,film.c.minuti]).where(and_(proiezioni.c.idProiezione==bindparam("proiez"),proiezioni.c.film==film.c.idFilm))
+    s=select([proiezioni.c.orario,film.c.idFilm,film.c.titolo,proiezioni.c.sala,proiezioni.c.prezzo,film.c.minuti]).where(and_(proiezioni.c.idProiezione==bindparam("proiez"),proiezioni.c.film==film.c.idFilm))
     res=conn.execute(s,proiez=id_proiezione)
     res=res.fetchall()
     if(len(res)==0):
@@ -363,21 +405,9 @@ def postiOccupati_proiezione_query(id_proiezione):
         conn.close()
         raise ResultException
 
-    numPosti=res["numPosti"]
-
-    """s=select([proiezioni.c.orario]).where(proiezioni.c.idProiezione==bindparam('id'))
-    res=conn.execute(s,id=id_proiezione)
-    res=res.fetchall()
-    if(len(res)==0 or res["orario"]<datetime.now()):
-        conn.close()
-        raise ResultException"""
-
+    numPosti=res["numPosti"] #numPosti della sala della proiezione
 
     #Per ora tutto ok
-    #Prendo i posti totali della sala della proiezione
-    #s=select([sale.c.numPosti]).where(and_(proiezioni.c.idProiezione==bindparam('id'),sale.c.idSala==proiezioni.c.sala))
-    #res=conn.execute(s,id=id_proiezione)
-    #postiTotali=res.fetchone()["numPosti"]
     #Prendo i posti gia' acquistati per quella proiezione
 
     s=select([biglietti.c.posto]).where(biglietti.c.proiezione==bindparam('id'))
@@ -385,14 +415,14 @@ def postiOccupati_proiezione_query(id_proiezione):
     list=res.fetchall()
     if(len(list)>0):
         list=[x["posto"] for x in list]
-    #list= [x["posto"] for x in list]
-    #list= [x for x in range(0,postiTotali) if x not in list] #creo la lista di posti liberi
+
     conn.close()
     if(len(list)>=numPosti):
         raise EmptyResultException
 
     return list
 
+#Ritorna il numPosti e il numFile della sala della data proiezione
 def numPostiFile_salaProiezione_query(idProiezione):
     conn=engine.connect()
     s=select([sale.c.numPosti,sale.c.numFile]).where(and_(proiezioni.c.idProiezione==bindparam('id'),sale.c.idSala==proiezioni.c.sala))
@@ -411,7 +441,7 @@ def compra_biglietto_query(posto,id_proiezione,email):
     trans=conn.begin()
 
     try:
-        if(posto in postiLiberi_proiezione_query(id_proiezione)): #Errore : posto gia' acquistato
+        if(posto in postiOccupati_proiezione_query(id_proiezione)): #Errore : posto gia' acquistato
             raise ResultException
         ins=biglietti.insert()
         conn.execute(ins,[{"posto":posto,"proiezione":id_proiezione,"cliente":email}]) #Creo nuovo biglietto
@@ -422,10 +452,6 @@ def compra_biglietto_query(posto,id_proiezione,email):
         conn.close()
         raise ResultException
 
-
-
-def filmInVoga_query():
-    conn=engine.connect()
 
 ####################################################
 

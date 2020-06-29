@@ -1,5 +1,18 @@
 {% extends "base.html" %}
 
 {% block pageblock %}
-Ricerca per <a href="/ricerca/perTitolo">titolo</a> o per <a href="/ricerca/perGenere">genere</a>
+<strong> RICERCA FILM </strong> <br><br><br>
+{% if filmGettonati %}
+Ecco i film in programmazione piu' gettonati
+<ul>
+  {% for film in filmGettonati %}
+  <li><a href={{url_for("mostraProiezioniFilm",id_film=film["idFilm"])}}>{{ film["titolo"] }}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
+<br><br>
+<a href="/ricerca/inProgrammazione"> <strong> Tutti i film in programmazione </strong></a> <br><br>
+<a href="/ricerca/perGiorno"> <strong> Ricerca per giorno </strong></a> <br><br>
+<a href="/ricerca/perTitolo"> <strong> Ricerca per titolo </strong></a> <br><br>
+<a href="/ricerca/perGenere"><strong> Ricerca per genere </strong></a>
 {% endblock %}

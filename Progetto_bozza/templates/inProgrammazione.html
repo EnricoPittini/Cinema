@@ -1,10 +1,10 @@
-{% extends "base.html" %}
+{% extends "ricerca_base.html" %}
 
-{% block pageblock %}
+{% block ricercablock %}
 Ecco i film in programmazione
 <ul>
   {% for film in films %}
-  <li><a href={{url_for("mostraProiezioniFilm",id_film=film["idFilm"])}}>{{ film["titolo"] }}</a></li>
+  <li><a href={{url_for("mostraProiezioniFilm",id_film=film["idFilm"],flag=0)}}>{{ film["titolo"] }}</a></li>
   {% endfor %}
 </ul>
 {% endif %}
