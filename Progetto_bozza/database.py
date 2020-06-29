@@ -316,8 +316,6 @@ def proiezioni_giorno_query(date):
     giorno=date[8:10]
     oraIn=datetime(int(anno),int(mese),int(giorno),0,0)
     oraFin=datetime(int(anno),int(mese),int(giorno),23,59)
-    print(oraIn)
-    print(oraFin)
     if oraFin<datetime.now():
         raise ResultException
 
@@ -336,24 +334,24 @@ def titolo_film_query(idFilm):
     conn=engine.connect()
     s=select([film.c.titolo]).where(film.c.idFilm==bindparam("film"))
     res=conn.execute(s,film=idFilm)
-    res=res.fetchall()
-    if(len(res)==0):
+    res=res.fetchone()
+    if(res is None:
         conn.close()
         raise EmptyResultException
     conn.close()
-    return res[0]["titolo"]
+    return res["titolo"]
 
 #ritorna l'orario, il titolo del film, la sala, il prezzo e la durata della proiezione con questo id
 def infoProiezione_query(id_proiezione):
     conn=engine.connect()
     s=select([proiezioni.c.orario,film.c.idFilm,film.c.titolo,proiezioni.c.sala,proiezioni.c.prezzo,film.c.minuti]).where(and_(proiezioni.c.idProiezione==bindparam("proiez"),proiezioni.c.film==film.c.idFilm))
     res=conn.execute(s,proiez=id_proiezione)
-    res=res.fetchall()
-    if(len(res)==0):
+    res=res.fetchone()
+    if(res is None:
         conn.close()
         raise EmptyResultException
     conn.close()
-    return res[0]
+    return res
 
 #Ritorna le proiezioni future del film con id id_film
 def proiezioni_film_query(id_film):
