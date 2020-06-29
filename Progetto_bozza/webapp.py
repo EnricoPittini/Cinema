@@ -215,8 +215,8 @@ def mostraProiezioniFilm(id_film):
         return render_template("proiezioniFilm.html",listaProiezioni=res)
     except (ResultException,EmptyResultException):
         return render_template("erroreRisultato.html",message="Non ci sono proiezioni per questo film",percorsoPrec=request.referrer)
-    #except:
-    #    return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
+    except:
+        return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
 
 #route dove si mostrano i posti liberi della proiezione selezionata
 @app.route("/proiezioni/<id_proiezione>")
@@ -237,8 +237,8 @@ def mostraPostiProiezione(id_proiezione):
         return render_template("erroreRisultato.html",message="Non ci sono posti liberi",percorsoPrec=request.referrer)
     except ResultException:
         return render_template("erroreRisultato.html",message="La proiezione non e' attualmente disponibile",percorsoPrec=request.referrer)
-    #except:
-    #    return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
+    except:
+        return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
 
 #route dove si effettua l'acquisto del posto selezionato
 @app.route("/proiezioni/<id_proiezione>/<posto>")
