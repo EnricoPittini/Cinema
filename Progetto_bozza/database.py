@@ -335,7 +335,7 @@ def titolo_film_query(idFilm):
     s=select([film.c.titolo]).where(film.c.idFilm==bindparam("film"))
     res=conn.execute(s,film=idFilm)
     res=res.fetchone()
-    if(res is None:
+    if(res is None):
         conn.close()
         raise EmptyResultException
     conn.close()
@@ -347,7 +347,7 @@ def infoProiezione_query(id_proiezione):
     s=select([proiezioni.c.orario,film.c.idFilm,film.c.titolo,proiezioni.c.sala,proiezioni.c.prezzo,film.c.minuti]).where(and_(proiezioni.c.idProiezione==bindparam("proiez"),proiezioni.c.film==film.c.idFilm))
     res=conn.execute(s,proiez=id_proiezione)
     res=res.fetchone()
-    if(res is None:
+    if(res is None):
         conn.close()
         raise EmptyResultException
     conn.close()
