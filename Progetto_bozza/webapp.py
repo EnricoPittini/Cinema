@@ -66,6 +66,8 @@ def login():
                 raise InvalidLoginException
         except (EmptyResultException,InvalidLoginException):
             return render_template("erroreRisultato.html",message="Errore login",percorsoPrec=request.referrer)
+        except:
+            return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
     else:
         return render_template("login.html") #form per il login
 
@@ -86,6 +88,8 @@ def private(email):
             return render_template("private.html",nome=usr["nomeUtente"],posti=posti)
     except (ResultException,EmptyResultException):
         return render_template("erroreRisultato.html",message="Errore login",percorsoPrec=request.referrer)
+    except:
+        return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
 
 #route per effettuare il logout
 @app.route('/logout')
@@ -114,6 +118,8 @@ def registrazione():
             return redirect(url_for("private",email=email)) #reindirizza all'area privata
         except (ResultException,EmptyResultException):
             return render_template("erroreRisultato.html",message="Errore registrazione",percorsoPrec=request.referrer)
+        except:
+            return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
     else:
         return render_template("registrazione.html")#form di registrazione
 
