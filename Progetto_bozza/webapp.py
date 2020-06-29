@@ -58,7 +58,8 @@ def login():
             email=request.form["email"] #email e password digitate dall'utente
             pwd=request.form["pwd"]
             usr=user_email_query(email) #Ritorna l'utente con quell'email
-            if(usr["pwd"]==pwd): #Controllo che sia tutto corretto
+            #se la password con applicata la funzione di hash corrisponde alla stringa memorizzata in pwd del DB
+            if(pbkdf2_sha256.verify(pwd,usr["pwd"])): #Controllo che sia tutto corretto
                 user=load_user(email)
                 login_user(user)
                 return redirect(url_for("private",email=email))
@@ -335,9 +336,10 @@ def creaGestore():
                 userName=request.form["userName"]
                 prov=request.form["prov"]
                 annoNascita=request.form["annoNascita"]
+                annoAssunzione=request.form["annoAssunzione"]
                 sesso=request.form["sesso"]
                 #richiamo la funzione definita in database.py per la crazione dell'utente gestore
-                aggiungi_utente_gestore_query(email,pwd,userName,annoNascita,sesso,prov)
+                aggiungi_utente_gestore_query(email,pwd,userName,annoNascita,sesso,prov,annoAssunzione)
                 return render_template("registrazioneGestore.html",utente=request.form["userName"])
             except ResultException:
                 return render_template("erroreRisultato.html",message="Non e' stato possibile creare un account gestore con queste credenziali.",percorsoPrec=request.referrer)

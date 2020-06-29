@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func,asc,desc, distinct
 from datetime import datetime,timedelta
+from passlib.hash import pbkdf2_sha256
 
 ############################################## Eccezioni definite da me per gestire meglio gli errori
 class EmptyResultException(Exception):
@@ -9,7 +10,7 @@ class ResultException(Exception):
     pass
 
 ###################################################
-engine=create_engine("postgres://enrico:alessandro@localhost:5432/cinema")
+engine=create_engine("postgres://matteo:matteofacci@localhost:5432/cinema")
 metadata=MetaData()
 utenti=Table("Utenti",metadata,Column("email",String,primary_key=True)
                               ,Column("nomeUtente",String,nullable=False)
@@ -174,6 +175,9 @@ def film_query():
 def film_statistiche_query(titolo):
     conn = engine.connect()
     res = conn.execute(select([film.c.titolo,film.c.anno,film.c.regista,film.c.minuti]).where(film.c.titolo.contains(bindparam('movie'))),movie=titolo)
+    #se non trovo nessun risultato allora provo a cercare il nome con la lettera maiuscola (l'utente potrebbe aver inserito il nome in minuscolo)
+    if(len(res.fetchall())==0):
+        res = conn.execute(select([film.c.titolo,film.c.anno,film.c.regista,film.c.minuti]).where(film.c.titolo.contains(bindparam('movie'))),movie=titolo.capitalize())
     conn.close()
     return res.fetchall()
 
@@ -230,7 +234,7 @@ def proiezioni_future_query():
     return res
 
 #Crea un nuovo utente (cliente) con questi dati
-def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
+def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia,annoAssunzione):
     if("maschio" in sesso):
         sesso="M"
     elif("femmina" in sesso):
@@ -249,6 +253,8 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
         res=res.fetchall()
         if(len(res)!=0):
             raise ResultException
+        #cripto la password con sha-256
+        pwd = pbkdf2_sha256.hash(pwd)
         ins=utenti.insert()
         conn.execute(ins,[{"email":email,"nomeUtente":nomeUtente,"pwd":pwd,"annoNascita":annoNascita,"sesso":sesso,"provincia":provincia,"gestore":False}])
         trans.commit()
@@ -258,7 +264,7 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
         conn.close()
         raise EmptyResultException
 
-def aggiungi_utente_gestore_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
+def aggiungi_utente_gestore_query(email,pwd,nomeUtente,annoNascita,sesso,provincia,annoAssunzione):
     if("maschio" in sesso):
         sesso="M"
     elif("femmina" in sesso):
@@ -273,8 +279,10 @@ def aggiungi_utente_gestore_query(email,pwd,nomeUtente,annoNascita,sesso,provinc
         res=res.fetchall()
         if(len(res)!=0):
             raise ResultException
+        #cripto la password con sha-256
+        pwd = pbkdf2_sha256.hash(pwd)
         ins=utenti.insert()
-        conn.execute(ins,[{"email":email,"nomeUtente":nomeUtente,"pwd":pwd,"annoNascita":annoNascita,"sesso":sesso,"provincia":provincia,"gestore":True}])
+        conn.execute(ins,[{"email":email,"nomeUtente":nomeUtente,"pwd":pwd,"annoNascita":annoNascita,"sesso":sesso,"provincia":provincia,"gestore":True,"annoAssunzione":annoAssunzione}])
         trans.commit()
         conn.close()
     except:
@@ -375,9 +383,14 @@ def film_titolo_query(titoloFilm):
     s=select([film]).where(film.c.titolo.contains(bindparam('titolo')))
     res=conn.execute(s,titolo=titoloFilm)
     res=res.fetchall()
-    conn.close()
+    #metto la prima lettera maiuscola se non ho trovato un risultato per verificare se l'utente volesse cercare un film mettendo il titolo in minuscolo
     if(len(res)==0):
-        raise  EmptyResultException
+        s=select([film]).where(film.c.titolo.contains(bindparam('titolo')))
+        res=conn.execute(s,titolo=titoloFilm.capitalize())
+        res=res.fetchall()
+        if(len(res)==0):
+            raise  EmptyResultException
+    conn.close()
     return res
 
 #data una lista ritorna una lista senza duplicati
@@ -588,33 +601,31 @@ def aggiungi_proiezione_query(idFilm,sala,orario,prezzo):
 def gestisci_sale_query(listasaledisponibili):
     conn=engine.connect()
     trans=conn.begin()
-    #try:
-    listasale=[x["idSala"] for x in sale_query()]
-    for value in listasale:
-        print(value)
-    #setto tutte le sale che non ho selezionato non disponibili
-    listasalenondisponibili = [i for i in listasale if i not in listasaledisponibili]
-    #imposto le sale non disponibili
-    for value in listasalenondisponibili:
-        #elimino le proiezioni di tutte le sale che non sono disponibili
-        deletebigliettiassociati=biglietti.delete().where(and_(biglietti.c.proiezione==proiezioni.c.idProiezione,sale.c.idSala==proiezioni.c.sala,sale.c.idSala==bindparam('sala')))
-        conn.execute(deletebigliettiassociati,sala=value)
-        #dopo aver eliminato i biglietti associati posso eliminare la proiezione
-        deleteproiezione=proiezioni.delete().where(and_(proiezioni.c.sala==sale.c.idSala,sale.c.disponibile==True,sale.c.idSala==bindparam('sala')))
-        res=conn.execute(deleteproiezione,sala=value)
-        #adesso imposto la disponibilita' della sala a false
-        q=sale.update().values(disponibile=False).where(sale.c.idSala==bindparam('sala'))
-        res=conn.execute(q,sala=value)
-    #rendo sale disponibili
-    for value in listasaledisponibili:
-        q=sale.update().values(disponibile=True).where(sale.c.idSala==bindparam('sala'))
-        res=conn.execute(q,sala=value)
-    trans.commit()
-    conn.close()
-    """except:
+    try:
+        listasale=[x["idSala"] for x in sale_query()]
+        #setto tutte le sale che non ho selezionato non disponibili
+        listasalenondisponibili = [i for i in listasale if i not in listasaledisponibili]
+        #imposto le sale non disponibili
+        for value in listasalenondisponibili:
+            #elimino le proiezioni future di tutte le sale che non sono disponibili
+            deletebigliettiassociati=biglietti.delete().where(and_(biglietti.c.proiezione==proiezioni.c.idProiezione,sale.c.idSala==proiezioni.c.sala,sale.c.idSala==bindparam('sala'),proiezioni.c.orario>datetime.now()))
+            conn.execute(deletebigliettiassociati,sala=value)
+            #dopo aver eliminato i biglietti associati posso eliminare la proiezione
+            deleteproiezione=proiezioni.delete().where(and_(proiezioni.c.sala==sale.c.idSala,sale.c.disponibile==True,sale.c.idSala==bindparam('sala'),proiezioni.c.orario>datetime.now()))
+            res=conn.execute(deleteproiezione,sala=value)
+            #adesso imposto la disponibilita' della sala a false
+            q=sale.update().values(disponibile=False).where(sale.c.idSala==bindparam('sala'))
+            res=conn.execute(q,sala=value)
+        #rendo sale disponibili
+        for value in listasaledisponibili:
+            q=sale.update().values(disponibile=True).where(sale.c.idSala==bindparam('sala'))
+            res=conn.execute(q,sala=value)
+        trans.commit()
+        conn.close()
+    except:
         trans.rollback()
         conn.close()
-        raise ResultException"""
+        raise ResultException
 
 def delete_proiezione_query(proiezione):
     conn=engine.connect()
