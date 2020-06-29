@@ -116,8 +116,10 @@ def registrazione():
             user=load_user(email)
             login_user(user)
             return redirect(url_for("private",email=email)) #reindirizza all'area privata
-        except (ResultException,EmptyResultException):
+        except ResultException:
             return render_template("erroreRisultato.html",message="Errore registrazione",percorsoPrec=request.referrer)
+        except EmptyResultException:
+            return render_template("erroreRisultato.html",message="Email gia' usata",percorsoPrec=request.referrer)
         except:
             return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
     else:

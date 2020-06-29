@@ -152,11 +152,11 @@ def user_email_query(usr_email):
     conn = engine.connect()
     s=select([utenti]).where(utenti.c.email==bindparam("email"))
     rs = conn.execute(s,email=usr_email)
-    user = rs.fetchall()
+    user = rs.fetchone()
     conn.close()
-    if(len(user)==0):
+    if(user is None):
         raise EmptyResultException
-    return user[0]
+    return user
 
 def utenti_province_query(prov):
     conn = engine.connect()
@@ -242,6 +242,8 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
     try:
         #E' necessaria una transazione, perche' devo effettura in successione una lettura ed una scrittura nel database. L'eventuale concorrenza di questa operazione
         #potrebbe generare problemi (lost update, fantasmi)
+
+        #Controllo che non ci sia nessun'altro utente con stessa email
         s=select([utenti]).where(utenti.c.email==bindparam("eml"))
         res=conn.execute(s,eml=email)
         res=res.fetchall()
@@ -254,13 +256,15 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
     except:#Errore
         trans.rollback()
         conn.close()
-        raise ResultException
+        raise EmptyResultException
 
 def aggiungi_utente_gestore_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
     if("maschio" in sesso):
         sesso="M"
     elif("femmina" in sesso):
         sesso="F"
+    else:
+        raise ResultException
     conn=engine.connect()
     trans=conn.begin()
     try:
@@ -279,7 +283,7 @@ def aggiungi_utente_gestore_query(email,pwd,nomeUtente,annoNascita,sesso,provinc
         raise ResultException
 
 #Ritorna i posti comprati dal cliente con questa email. Questi posti sono relativi a proiezioni future
-#Oltre ai posti, ritorna anche l'orario,il titolo e la sala della proiezione relativa
+#Oltre ai posti, ritorna anche l'orario,il titolo, la durata e la sala della proiezione relativa
 def posti_cliente_query(email):
     conn=engine.connect()
     s=select([biglietti.c.posto,proiezioni.c.orario,film.c.titolo,proiezioni.c.sala,film.c.minuti]).where(and_(biglietti.c.cliente==bindparam("email"),
