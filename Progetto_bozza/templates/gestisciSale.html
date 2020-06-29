@@ -75,15 +75,16 @@ input:checked + .slider:before {
         {{value["idSala"]}}
       </td>
       <td>
-        {% if value["disponibile"] == True%}
-          Disponibile
-        {% else %}
-          Non disponibile
-        {% endif %}
+          {% if value["disponibile"] == True%}
+            Disponibile
+          {% else %}
+            Non disponibile
+          {% endif %}
+
       </td>
       <td>
         <label class="switch">
-          <input value={{value}} name="mycheckbox" type="checkbox">
+          <input value="{{ value['idSala'] }}" name="mycheckbox" type="checkbox">
           <span class="slider round"></span>
         </label>
       </td>

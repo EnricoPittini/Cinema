@@ -233,62 +233,69 @@ def ricercaPerGenereFilms(genereFilm):
 ########################################################################
 
 ################### STATISTICHE
+
+#route dove si mostrano le varie tipologie di statistiche
 @app.route("/statistiche")
 @login_required
 def statistiche():
     return render_template("statistiche.html")
 
+#route interna a statistiche, dove si puo effettuare la ricerca per titolo
 @app.route("/statistiche/perTitolo",methods=['GET','POST'])
 @login_required
 def statisticheTitolo():
     if current_user.isGestore() is False:
-        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
         if(request.method == 'POST'):
             try:
                 res=statisticheTitolo_query(request.form["titolo"])
                 return render_template("risultatoStatistiche.html",titolo=request.form["titolo"],stats=res,films=film_statistiche_query(request.form["titolo"]),percorso=0,descrizione="titolo")
             except EmptyResultException:
-                return render_template("erroreRisultato.html",message="Non ci sono film con il nome digitato o simili")
+                return render_template("erroreRisultato.html",message="Non ci sono film con il nome digitato o simili",percorsoPrec=request.referrer)
         else:
             return render_template("statistichePerTitolo.html")
 
+#route interna a statistiche, dove si puo effettuare la ricerca scegliendo un genere
 @app.route("/statistiche/perGenere",methods=['GET','POST'])
 @login_required
 def statisticheGenere():
     if current_user.isGestore() is False:
-        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
         try:
             if(request.method == 'POST'):
                 res=statisticheGenere_query(request.form["genere"])
                 return render_template("risultatoStatistiche.html",genere=request.form["genere"],stats=res,films=generi_statistiche_query(request.form["genere"]),percorso=1,descrizione="genere")
         except EmptyResultException:
-            return render_template("erroreRisultato.html",message="Non ci sono film con il genere selezionato")
+            return render_template("erroreRisultato.html",message="Non ci sono film con il genere selezionato",percorsoPrec=request.referrer)
         else:
             return render_template("statistichePerGenere.html",generi=generi_query())
 
+#route interna a statistiche, dove si puo effettuare la ricerca scegliendo una provincia
 @app.route("/statistiche/perProvincia",methods=['GET','POST'])
 @login_required
 def statisticheProvincia():
     if current_user.isGestore() is False:
-        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
         if(request.method == 'POST'):
             try:
                 res=statisticheProvincia_query(request.form["provincia"])
                 return render_template("risultatoStatistiche.html",provincia=request.form["provincia"],stats=res,utenti=utenti_province_query(request.form["provincia"]),percorso=2,descrizione="provincia")
             except EmptyResultException:
-                return render_template("erroreRisultato.html",message="Non esistono utenti appartenenti a questa provincia")
+                return render_template("erroreRisultato.html",message="Non esistono utenti appartenenti a questa provincia",percorsoPrec=request.referrer)
         else:
             return render_template("statistichePerProvincia.html",province=province_query())
 
 ################### CREA GESTORE
+
+#route in cui viene effettuata la creazione di un gestore
 @app.route("/creaGestore",methods=['GET','POST'])
 @login_required
 def creaGestore():
     if current_user.isGestore() is False:
-        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
         if(request.method == 'POST'):
             try:
@@ -298,28 +305,33 @@ def creaGestore():
                 prov=request.form["prov"]
                 annoNascita=request.form["annoNascita"]
                 sesso=request.form["sesso"]
+                #richiamo la funzione definita in database.py per la crazione dell'utente gestore
                 aggiungi_utente_gestore_query(email,pwd,userName,annoNascita,sesso,prov)
                 return render_template("registrazioneGestore.html",utente=request.form["userName"])
             except ResultException:
-                return render_template("erroreRisultato.html",message="Non e' stato possibile creare un account gestore")
+                return render_template("erroreRisultato.html",message="Non e' stato possibile creare un account gestore con queste credenziali.",percorsoPrec=request.referrer)
         else:
             return render_template("registrazioneGestore.html")
 
 ################### AMMINISTRA
+
+#route in cui vengono mostrate tutte le operazioni che puo svolgere un amministratore sul db
 @app.route("/amministra")
 @login_required
 def amministra():
     if current_user.isGestore() is False:
-        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
         return render_template("amministra.html")
 
+#route che permette la creazione di film all'interno del db
 @app.route("/creaFilm",methods=['GET','POST'])
 @login_required
 def creaFilm():
     if current_user.isGestore() is False:
-        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
+        generi=["Animazione","Avventura","Azione","Biografico","Catastrofico","Commedia","Documentario","Drammatico","Giallo","Pornografico","Erotico","Fantascienza","Fantasy","Guerra","Horror","Musical","Noir","Sentimentale","Storico","Thriller","Western"]
         if(request.method == 'POST'):
             try:
                 titolo=request.form["titolo"]
@@ -327,21 +339,22 @@ def creaFilm():
                 regista=request.form["regista"]
                 minuti=request.form["minuti"]
                 if(minuti<1 or anno<1970):
-                    return render_template("erroreRisultato.html",message="La durata di un film deve essere maggiore o uguale a 1 e l'anno deve essere maggiore di 1970.")
+                    return render_template("erroreRisultato.html",message="La durata di un film deve essere maggiore o uguale a 1 e l'anno deve essere maggiore di 1970.",percorsoPrec=request.referrer)
                 else:
                     genere=request.form.getlist('generi')
                     aggiungi_film_query(titolo,anno,regista,genere,minuti)
-                    return render_template("creaFilm.html",genere=generi_query(),titolo=titolo)
+                    return render_template("creaFilm.html",genere=generi,titolo=titolo)
             except ResultException:
-                return render_template("erroreRisultato.html",message="Non e' stato possibile inserire un film con questi valori")
+                return render_template("erroreRisultato.html",message="Non e' stato possibile inserire un film con questi valori",percorsoPrec=request.referrer)
         else:
-            return render_template("creaFilm.html",genere=generi_query())
+            return render_template("creaFilm.html",genere=generi)
 
+#route che permette la creazione di una sala, stabilendo posti e numero di file
 @app.route("/creaSala",methods=['GET','POST'])
 @login_required
 def creaSala():
     if current_user.isGestore() is False:
-        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
         if(request.method == 'POST'):
             try:
@@ -349,21 +362,21 @@ def creaSala():
                 file=request.form["file"]
                 #se i valori di nposti o nfile sono <0 allora ritorno un'eccezione
                 if(int(posti)<10 or (int(file)<1) or (int(posti)%int(file)!=0)):
-                    return render_template("erroreRisultato.html",message="Creare una sala a queste condizioni: numero dei posti>0, numero delle file>1 e posti%file deve essere 0")
+                    return render_template("erroreRisultato.html",message="Creare una sala a queste condizioni: numero dei posti>0, numero delle file>1 e posti%file deve essere 0",percorsoPrec=request.referrer)
                 else:
                     nsala=aggiungi_sala_query(posti,file)
                     return render_template("creaSala.html",nsala=nsala,method="POST")
             except ResultException:
-                return render_template("erroreRisultato.html",message="Non e' stato possibile inserire una sala con questi valori")
+                return render_template("erroreRisultato.html",message="Non e' stato possibile inserire una sala con questi valori",percorsoPrec=request.referrer)
         else:
             return render_template("creaSala.html")
 
-
+#route nella quale vengono mostrate tutte le sale, con le relative disponibilita attuali
 @app.route("/gestisciSala",methods=['GET','POST'])
 @login_required
 def gestisciSala():
     if current_user.isGestore() is False:
-        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
         if(request.method == 'POST'):
             #creazione lista sale disponibili
@@ -374,11 +387,12 @@ def gestisciSala():
             sale=sale_query()
             return render_template("gestisciSale.html",sale=sale_query())
 
+#route per aggiungere una proiezione, specificando un giorno e un'ora
 @app.route("/aggiungiProiezione",methods=['GET','POST'])
 @login_required
 def aggiungiProiezione():
     if current_user.isGestore() is False:
-        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
         if(request.method == 'POST'):
             try:
@@ -388,29 +402,31 @@ def aggiungiProiezione():
                 prezzo=request.form["prezzo"]
                 listafilm=aggiungi_proiezione_query(film,sala,orario,prezzo)
                 if(listafilm is not None and len(listafilm)>0):
-                    return render_template("erroreRisultato.html",message="Impossibile completare l'operazione: proiezioni gia' presenti durante lo stesso orario")
+                    return render_template("erroreRisultato.html",message="Impossibile completare l'operazione: proiezioni gia' presenti durante lo stesso orario.",percorsoPrec=request.referrer)
                 else:
                     titolo=titolo_film_query(film)
                     return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_disponibili_query(),film=titolo,sala=sala,orario=orario)
             except ResultException:
-                return render_template("erroreRisultato.html",message="Impossibile effettuare l'operazione al momento")
+                return render_template("erroreRisultato.html",message="Impossibile effettuare l'operazione al momento",percorsoPrec=request.referrer)
         else:
             return render_template("aggiungiProiezione.html",listafilm=film_query(),listasale=sale_disponibili_query())
 
+#route per eliminare le proieioni future delle sale dispinibili
 @app.route("/eliminaProiezioneFutura",methods=['GET','POST'])
 @login_required
 def eliminaProiezioneFutura():
     if current_user.isGestore() is False:
-        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
         if(request.method == 'POST'):
             return render_template("eliminaProiezione.html",proiezioni=proiezioni_future_query())
         return render_template("eliminaProiezione.html",proiezioni=proiezioni_future_query())
 
+#route che prende un parametro 'proiezione' ed effettua l'eliminazione di quella proiezione e dei relativi biglietti associati
 @app.route("/eliminaProiezioneFutura/<proiezione>")
 def eliminaProiezioneFuturaProc(proiezione):
     if current_user.isGestore() is False:
-        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione")
+        return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
         delete_proiezione_query(proiezione)
         return redirect(url_for("eliminaProiezioneFutura"))

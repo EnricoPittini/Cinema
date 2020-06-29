@@ -211,8 +211,9 @@ def generi_statistiche_query(genere):
 def sale_query():
     conn = engine.connect()
     res = conn.execute(select([sale.c.idSala,sale.c.disponibile]).order_by(asc(sale.c.idSala)))
+    list = [dict(zip(['idSala','disponibile'], row)) for row in res.fetchall()]
     conn.close()
-    return res.fetchall()
+    return list
 
 def sale_disponibili_query():
     conn = engine.connect()
@@ -560,7 +561,9 @@ def gestisci_sale_query(listasaledisponibili):
     conn=engine.connect()
     trans=conn.begin()
     #try:
-    listasale=sale_query()
+    listasale=[x["idSala"] for x in sale_query()]
+    for value in listasale:
+        print(value)
     #setto tutte le sale che non ho selezionato non disponibili
     listasalenondisponibili = [i for i in listasale if i not in listasaledisponibili]
     #imposto le sale non disponibili

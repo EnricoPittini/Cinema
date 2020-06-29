@@ -1,6 +1,12 @@
 {% extends "amministra_base.html" %}
 
 {% block pageblock%}
+<style>
+  #generi{
+    height:200px;
+    width:100px;
+  }
+</style>
 <h1>Inserisci un film</h1>
 <form action="/creaFilm" method="POST">
   Titolo:<input name="titolo" type="text">
