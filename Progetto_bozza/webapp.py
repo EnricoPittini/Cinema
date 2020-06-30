@@ -4,11 +4,11 @@ from flask_login import LoginManager,UserMixin,login_required,login_user,logout_
 
 app = Flask(__name__)
 
-class InvalidLoginException(Exception):#Eccezione definite da me per gestire meglio gli errori
+class InvalidLoginException(Exception):#Eccezione definite da noi per gestire meglio gli errori
     pass
 
 app.run(debug=True)
-app.config['SECRET_KEY'] = 'ubersecret'
+app.config['SECRET_KEY'] = 'a7kUt2pbgH!'
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -32,7 +32,7 @@ class User(UserMixin):
     def isGestore(self):
         return self.gestore
 
-@login_manager.user_loader ######### Exception
+@login_manager.user_loader 
 def load_user(user_email):
     user=user_email_query(user_email)
     return User( user["email"] , user["pwd"],user["nomeUtente"],user["annoNascita"],user["sesso"],user["provincia"],user["gestore"],user["annoAssunzione"])
