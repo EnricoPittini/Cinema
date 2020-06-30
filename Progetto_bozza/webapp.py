@@ -111,7 +111,7 @@ def registrazione():
         userName=request.form["userName"]
         prov=request.form["prov"]
         annoNascita=request.form["annoNascita"]
-        sesso=request.form["sesso"]
+        sesso=request.form.get('sesso')
         try:
             aggiungi_utente_query(email,pwd,userName,annoNascita,sesso,prov) #funzione che crea un nuovo utente (E' un cliente)
             user=load_user(email)
@@ -337,7 +337,7 @@ def creaGestore():
                 prov=request.form["prov"]
                 annoNascita=request.form["annoNascita"]
                 annoAssunzione=request.form["annoAssunzione"]
-                sesso=request.form["sesso"]
+                sesso=request.form.get('sesso')
                 #richiamo la funzione definita in database.py per la crazione dell'utente gestore
                 aggiungi_utente_gestore_query(email,pwd,userName,annoNascita,sesso,prov,annoAssunzione)
                 return render_template("registrazioneGestore.html",utente=request.form["userName"])
