@@ -240,7 +240,7 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
     elif("femmina" in sesso):
         sesso="F"
     else:
-        raise ResultException
+        raise EmptyResultException
     conn=engine.connect()
     trans=conn.begin()
     try:
@@ -259,7 +259,11 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
         conn.execute(ins,[{"email":email,"nomeUtente":nomeUtente,"pwd":pwd,"annoNascita":annoNascita,"sesso":sesso,"provincia":provincia,"gestore":False}])
         trans.commit()
         conn.close()
-    except:#Errore
+    except ResultException:#Errore
+        trans.rollback()
+        conn.close()
+        raise ResultException
+    except :#Errore
         trans.rollback()
         conn.close()
         raise EmptyResultException
