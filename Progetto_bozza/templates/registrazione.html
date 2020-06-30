@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block pageblock %}
-Inserisci email, nome utente, password, provincia, anno nascita e sesso (maschio o femmina):
+Inserisci un nuovo utente:<br><br>
 <form action="/registrazione" method="POST">
   <div>
     <label>Email:</label><br>
@@ -15,7 +15,10 @@ Inserisci email, nome utente, password, provincia, anno nascita e sesso (maschio
     <label>Anno di nascita:</label><br>
     <input name="annoNascita" type="text"><br>
     <label>Sesso:</label><br>
-    <input name="sesso" placeholder="maschio/femmina" type="text"><br>
+    <select name="sesso">
+      <option value="M">Maschio</option>
+      <option value="F">Femmina</option>
+    </select><br>
     <input type="submit">
   </div>
 </form>

@@ -1,7 +1,6 @@
-from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func,asc,desc, distinct, text
+from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func,asc,desc,distinct,text,Enum
 from datetime import datetime,timedelta
 from passlib.hash import pbkdf2_sha256
-
 ############################################## Eccezioni definite da me per gestire meglio gli errori
 class EmptyResultException(Exception):
     pass
@@ -12,12 +11,13 @@ class ResultException(Exception):
 ###################################################
 engine=create_engine("postgres://enrico:alessandro@localhost:5432/cinema")
 metadata=MetaData()
+
 utenti=Table("Utenti",metadata,Column("email",String,primary_key=True)
                               ,Column("nomeUtente",String,nullable=False)
                               ,Column("pwd",String,nullable=False)
-                              ,Column("annoNascita",Integer,nullable=False)
-                              ,Column("sesso",String,CheckConstraint("sesso='M' OR sesso='F'"))
-                              ,Column("provincia",String,nullable=False)
+                              ,Column("annoNascita",Integer)
+                              ,Column("sesso",Enum('M','F',name='sesso'),CheckConstraint("sesso='M' OR sesso='F'"),nullable=False)
+                              ,Column("provincia",String)
                               ,Column("gestore",Boolean,nullable=False)
                               ,Column("annoAssunzione",Integer))
 film=Table("Film",metadata,Column("idFilm",Integer,primary_key=True)
@@ -26,7 +26,7 @@ film=Table("Film",metadata,Column("idFilm",Integer,primary_key=True)
                           ,Column("regista",String,nullable=False)
                           ,Column("minuti",Integer,CheckConstraint("minuti>=1"),nullable=False))
 generi=Table("GeneriFilm",metadata,Column("genere",String)
-                                  ,Column("film",Integer,ForeignKey("Film.idFilm"))#,nullable=False)
+                                  ,Column("film",Integer,ForeignKey("Film.idFilm",ondelete="cascade",onupdate="cascade"))#,nullable=False)
                                   ,PrimaryKeyConstraint("genere","film"))
 sale=Table("Sale",metadata,Column("idSala",Integer,primary_key=True)
                           ,Column("numPosti",Integer,CheckConstraint("\"numPosti\">=10"),nullable=False)
@@ -38,8 +38,8 @@ proiezioni=Table("Proiezioni",metadata,Column("idProiezione",Integer,primary_key
                                       ,Column("film",Integer,ForeignKey("Film.idFilm"),nullable=False)
                                       ,Column("sala",Integer,ForeignKey("Sale.idSala"),nullable=False))
 biglietti=Table("Biglietti",metadata,Column("posto",Integer,CheckConstraint("posto>=0"))#,nullable=False)
-                                    ,Column("proiezione",Integer,ForeignKey("Proiezioni.idProiezione"))#,nullable=False)
-                                    ,Column("cliente",String,ForeignKey("Utenti.email"),nullable=False)
+                                    ,Column("proiezione",Integer,ForeignKey("Proiezioni.idProiezione",ondelete="cascade",onupdate="cascade"))#,nullable=False)
+                                    ,Column("cliente",String,ForeignKey("Utenti.email",ondelete="cascade",onupdate="cascade"),nullable=False)
                                     ,PrimaryKeyConstraint("posto","proiezione"))
 
 
@@ -52,7 +52,7 @@ ins=utenti.insert()
 res=conn.execute(select([utenti]))
 for r in res.fetchall():
     print(r)
-conn.execute(ins,{"email":"pittinienrico@hotmail.it","nomeUtente":"Enrico","pwd":"tarallo99","annoNascita":1999,"sesso":"M","provincia":"Treviso","gestore":False})
+conn.execute(ins,{"email":"pittinienrico@hotmail.it","nomeUtente":"Enrico","pwd":pbkdf2_sha256.hash(tarallo99),"annoNascita":1999,"sesso":"M","provincia":"Treviso","gestore":False})
 ins=film.insert()
 conn.execute(ins,[{"idFilm":1,"titolo":"Memento","anno":2000,"regista":"Christopher Nolan","minuti":114},
                   {"idFilm":2,"titolo":"Inception","anno":2010,"regista":"Christopher Nolan","minuti":148},
@@ -145,8 +145,8 @@ conn.execute(ins,[{"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":1,"sal
                   {"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":1,"sala":1},
                   {"orario":datetime(2019,4,15,20,30),"prezzo":10.5,"film":2,"sala":1},
                   {"orario":datetime(2019,5,10,23,30),"prezzo":9.5,"film":6,"sala":2}])
-conn.close()
-"""
+conn.close()"""
+
 ######################################### Query per login e registrazione
 #Ritorna l'utente con quella mail
 def user_email_query(usr_email):
@@ -235,12 +235,6 @@ def proiezioni_future_query():
 
 #Crea un nuovo utente (cliente) con questi dati
 def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
-    if("maschio" in sesso):
-        sesso="M"
-    elif("femmina" in sesso):
-        sesso="F"
-    else:
-        raise EmptyResultException
     conn=engine.connect()
     trans=conn.begin()
     try:
@@ -269,12 +263,7 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
         raise EmptyResultException
 
 def aggiungi_utente_gestore_query(email,pwd,nomeUtente,annoNascita,sesso,provincia,annoAssunzione):
-    if("maschio" in sesso):
-        sesso="M"
-    elif("femmina" in sesso):
-        sesso="F"
-    else:
-        raise ResultException
+
     conn=engine.connect()
     trans=conn.begin()
     try:
@@ -635,10 +624,7 @@ def gestisci_sale_query(listasaledisponibili):
         listasalenondisponibili = [i for i in listasale if i not in listasaledisponibili]
         #imposto le sale non disponibili
         for value in listasalenondisponibili:
-            #elimino le proiezioni future di tutte le sale che non sono disponibili
-            deletebigliettiassociati=biglietti.delete().where(and_(biglietti.c.proiezione==proiezioni.c.idProiezione,sale.c.idSala==proiezioni.c.sala,sale.c.idSala==bindparam('sala'),proiezioni.c.orario>datetime.now()))
-            conn.execute(deletebigliettiassociati,sala=value)
-            #dopo aver eliminato i biglietti associati posso eliminare la proiezione
+            #All'eliminazione delle proiezioni elimino anche i relativi biglietti associati per i cascades
             deleteproiezione=proiezioni.delete().where(and_(proiezioni.c.sala==sale.c.idSala,sale.c.disponibile==True,sale.c.idSala==bindparam('sala'),proiezioni.c.orario>datetime.now()))
             res=conn.execute(deleteproiezione,sala=value)
             #adesso imposto la disponibilita' della sala a false
@@ -659,10 +645,7 @@ def delete_proiezione_query(proiezione):
     conn=engine.connect()
     trans=conn.begin()
     try:
-
-        deletebigliettiassociati=biglietti.delete().where(and_(biglietti.c.proiezione==proiezioni.c.idProiezione,proiezioni.c.idProiezione==bindparam('proiezione')))
-        conn.execute(deletebigliettiassociati,proiezione=proiezione)
-        #dopo aver eliminato i biglietti associati posso eliminare la proiezione
+        #All'eliminazione delle proiezioni elimino anche i relativi biglietti associati per i cascades
         deleteproiezione=proiezioni.delete().where(and_(proiezioni.c.idProiezione==bindparam('proiezione'),proiezioni.c.sala==sale.c.idSala,sale.c.disponibile==True))
         res=conn.execute(deleteproiezione,proiezione=proiezione)
         trans.commit()
