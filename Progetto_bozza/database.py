@@ -391,7 +391,6 @@ def film_genere_query(genereFilm):
     s=select([film]).where(and_(generi.c.film==film.c.idFilm,generi.c.genere==bindparam('genere')))
     res=conn.execute(s,genere=genereFilm)
     res=res.fetchall()
-    #print(res)
     conn.close()
     if(len(res)==0):
         raise  EmptyResultException
