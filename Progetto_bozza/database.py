@@ -230,13 +230,6 @@ def proiezioni_future_query():
     conn.close()
     return res
 
-def idproiezioni_future_query():
-    conn = engine.connect()
-    res = conn.execute(select([proiezioni.c.idProiezione]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>=datetime.now(),sale.c.idSala==proiezioni.c.sala,sale.c.disponibile)).order_by(asc(proiezioni.c.orario)))
-    list=[x["idProiezione"] for x in res.fetchall()]
-    conn.close()
-    return list
-
 #Crea un nuovo utente (cliente) con questi dati
 def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
     conn=engine.connect()
