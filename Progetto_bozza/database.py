@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func,asc,desc, distinct
+from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func,asc,desc, distinct, text
 from datetime import datetime,timedelta
 from passlib.hash import pbkdf2_sha256
 
@@ -380,7 +380,7 @@ def proiezioni_film_query(id_film):
 #data una stringa titoloFilm ritorna i film che hanno come titolo una stringa che contiene al suo interno titoloFilm (titoloFilm e' sottostringa)
 def film_titolo_query(titoloFilm):
     conn=engine.connect()
-    s=select([film]).where(film.c.titolo.contains(bindparam('titolo')))
+    """s=select([film]).where(film.c.titolo.contains(bindparam('titolo')))
     res=conn.execute(s,titolo=titoloFilm)
     res=res.fetchall()
     #metto la prima lettera maiuscola se non ho trovato un risultato per verificare se l'utente volesse cercare un film mettendo il titolo in minuscolo
@@ -389,7 +389,12 @@ def film_titolo_query(titoloFilm):
         res=conn.execute(s,titolo=titoloFilm.capitalize())
         res=res.fetchall()
         if(len(res)==0):
-            raise  EmptyResultException
+            raise  EmptyResultException"""
+    s=select([film]).where((func.lower(film.c.titolo)).contains(bindparam('titolo')))
+    res=conn.execute(s,titolo=titoloFilm.lower())
+    res=res.fetchall()
+    if(len(res)==0):
+        raise  EmptyResultException
     conn.close()
     return res
 

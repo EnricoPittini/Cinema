@@ -180,8 +180,8 @@ def ricercaPerTitoloFilms():
             return render_template("filmRicercati.html",listaFilm=res,titolo=titolo,percorsoPrec="/ricerca/perTitolo")
         except EmptyResultException:
             return render_template("erroreRisultato.html",message="La ricerca non ha prodotto alcun risultato",percorsoPrec=request.referrer)
-        except:
-            return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
+        #except:
+        #    return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
     else:
         return render_template("ricercaPerTitolo.html") #pagina con il form
 
