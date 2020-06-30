@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine,MetaData,Table,Column,String,Integer,ForeignKey,DateTime,Float,Boolean,CheckConstraint,select,and_,PrimaryKeyConstraint,bindparam,func,asc,desc,distinct,text,Enum
 from datetime import datetime,timedelta
 from passlib.hash import pbkdf2_sha256
-############################################## Eccezioni definite da me per gestire meglio gli errori
+############################################## Eccezioni definite da noi per gestire meglio gli errori
 class EmptyResultException(Exception):
     pass
 

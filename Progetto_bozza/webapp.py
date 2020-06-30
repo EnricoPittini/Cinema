@@ -4,7 +4,7 @@ from flask_login import LoginManager,UserMixin,login_required,login_user,logout_
 
 app = Flask(__name__)
 
-class InvalidLoginException(Exception):#Eccezione definite da me per gestire meglio gli errori
+class InvalidLoginException(Exception):#Eccezione definite da noi per gestire meglio gli errori
     pass
 
 app.run(debug=True)
