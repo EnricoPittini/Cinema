@@ -284,7 +284,7 @@ def statisticheTitolo():
                 res=statisticheTitolo_query(request.form["titolo"])
                 return render_template("risultatoStatistiche.html",titolo=request.form["titolo"],stats=res,films=film_statistiche_query(request.form["titolo"]),percorso=0,descrizione="titolo")
             except EmptyResultException:
-                return render_template("erroreRisultato.html",message="Non ci sono film con il nome digitato o simili",percorsoPrec=request.referrer)
+                return render_template("erroreRisultato.html",message="La ricerca non ha prodotto alcun risultato",percorsoPrec=request.referrer)
         else:
             return render_template("statistichePerTitolo.html")
 
@@ -456,10 +456,12 @@ def eliminaProiezioneFutura():
         return render_template("eliminaProiezione.html",proiezioni=proiezioni_future_query())
 
 #route che prende un parametro 'proiezione' ed effettua l'eliminazione di quella proiezione e dei relativi biglietti associati
-@app.route("/eliminaProiezioneFutura/<proiezione>")
+@app.route("/eliminaProiezioneFutura/<proiezione>",methods=['GET'])
 def eliminaProiezioneFuturaProc(proiezione):
     if current_user.isGestore() is False:
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
+        if proiezione not in idproiezioni_future_query():
+            return render_template("erroreRisultato.html",message="Impossibile eliminare questa proiezione.",percorsoPrec=request.referrer)
         delete_proiezione_query(proiezione)
         return redirect(url_for("eliminaProiezioneFutura"))

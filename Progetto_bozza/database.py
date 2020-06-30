@@ -9,7 +9,7 @@ class ResultException(Exception):
     pass
 
 ###################################################
-engine=create_engine("postgres://enrico:alessandro@localhost:5432/cinema")
+engine=create_engine("postgres://matteo:matteofacci@localhost:5432/cinema")
 metadata=MetaData()
 
 utenti=Table("Utenti",metadata,Column("email",String,primary_key=True)
@@ -174,10 +174,7 @@ def film_query():
 
 def film_statistiche_query(titolo):
     conn = engine.connect()
-    res = conn.execute(select([film.c.titolo,film.c.anno,film.c.regista,film.c.minuti]).where(film.c.titolo.contains(bindparam('movie'))),movie=titolo)
-    #se non trovo nessun risultato allora provo a cercare il nome con la lettera maiuscola (l'utente potrebbe aver inserito il nome in minuscolo)
-    if(len(res.fetchall())==0):
-        res = conn.execute(select([film.c.titolo,film.c.anno,film.c.regista,film.c.minuti]).where(film.c.titolo.contains(bindparam('movie'))),movie=titolo.capitalize())
+    res = conn.execute(select([film.c.titolo,film.c.anno,film.c.regista,film.c.minuti]).where((func.lower(film.c.titolo).contains(bindparam('movie')))),movie=titolo.lower())
     conn.close()
     return res.fetchall()
 
@@ -232,6 +229,13 @@ def proiezioni_future_query():
     res = conn.execute(select([proiezioni.c.idProiezione,proiezioni.c.orario,proiezioni.c.prezzo,film.c.titolo]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>=datetime.now(),sale.c.idSala==proiezioni.c.sala,sale.c.disponibile)).order_by(asc(proiezioni.c.orario)))
     conn.close()
     return res
+
+def idproiezioni_future_query():
+    conn = engine.connect()
+    res = conn.execute(select([proiezioni.c.idProiezione]).where(and_(proiezioni.c.film==film.c.idFilm,proiezioni.c.orario>=datetime.now(),sale.c.idSala==proiezioni.c.sala,sale.c.disponibile)).order_by(asc(proiezioni.c.orario)))
+    list=[x["idProiezione"] for x in res.fetchall()]
+    conn.close()
+    return list
 
 #Crea un nuovo utente (cliente) con questi dati
 def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
@@ -373,16 +377,6 @@ def proiezioni_film_query(id_film):
 #data una stringa titoloFilm ritorna i film che hanno come titolo una stringa che contiene al suo interno titoloFilm (titoloFilm e' sottostringa)
 def film_titolo_query(titoloFilm):
     conn=engine.connect()
-    """s=select([film]).where(film.c.titolo.contains(bindparam('titolo')))
-    res=conn.execute(s,titolo=titoloFilm)
-    res=res.fetchall()
-    #metto la prima lettera maiuscola se non ho trovato un risultato per verificare se l'utente volesse cercare un film mettendo il titolo in minuscolo
-    if(len(res)==0):
-        s=select([film]).where(film.c.titolo.contains(bindparam('titolo')))
-        res=conn.execute(s,titolo=titoloFilm.capitalize())
-        res=res.fetchall()
-        if(len(res)==0):
-            raise  EmptyResultException"""
     s=select([film]).where((func.lower(film.c.titolo)).contains(bindparam('titolo')))
     res=conn.execute(s,titolo=titoloFilm.lower())
     res=res.fetchall()
@@ -607,8 +601,8 @@ def aggiungi_proiezione_query(idFilm,sala,orario,prezzo):
         minuti=orario[14:16]
         orario=datetime(int(anno),int(mese),int(giorno),int(ora),int(minuti))
         #trovo se ho film nell'arco di tempo in cui voglio inserire la proiezione
-        q1=select([film.c.titolo]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.sala==sale.c.idSala,sale.c.idSala==bindparam('sala'),proiezioni.c.orario<orario,orario<(proiezioni.c.orario+timedelta(hours=3))))
-        res=conn.execute(q1,sala=sala)
+        q1=select([film.c.titolo]).where(and_(film.c.idFilm==proiezioni.c.film,proiezioni.c.sala==sale.c.idSala,sale.c.idSala==bindparam('sala'),proiezioni.c.orario<bindparam('orario'),bindparam('orario')<(proiezioni.c.orario+timedelta(hours=3))))
+        res=conn.execute(q1,sala=sala,orario=orario)
         filmstessoorario=res.fetchall()
         list=[x["titolo"] for x in filmstessoorario]
         if(list is not None and len(list)>0):
