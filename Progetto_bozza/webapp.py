@@ -67,8 +67,8 @@ def login():
                 raise InvalidLoginException
         except (EmptyResultException,InvalidLoginException):
             return render_template("erroreRisultato.html",message="Errore login",percorsoPrec=request.referrer)
-        except:
-            return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
+        #except:
+        #    return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
     else:
         return render_template("login.html") #form per il login
 
@@ -121,8 +121,8 @@ def registrazione():
             return render_template("erroreRisultato.html",message="Errore registrazione",percorsoPrec=request.referrer)
         except EmptyResultException:
             return render_template("erroreRisultato.html",message="Email gia' usata",percorsoPrec=request.referrer)
-        except:
-            return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
+        #except:
+        #    return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)
     else:
         return render_template("registrazione.html")#form di registrazione
 
@@ -201,7 +201,7 @@ def ricercaPerGenereFilms(genereFilm):
     try:
         res=film_genere_query(genereFilm) #funzione che ritorna tutti i film con quel genere
         return render_template("filmRicercati.html",listaFilm=res,genere=genereFilm,percorsoPrec="/ricerca/perGenere")
-    except ResultException,EmptyResultException:
+    except (ResultException,EmptyResultException):
         return render_template("erroreRisultato.html",message="Non ci sono film con genere "+genereFilm,percorsoPrec=request.referrer)
     except:
         return render_template("erroreRisultato.html",message="Oops, qualcosa e' andato storto",percorsoPrec=request.referrer)

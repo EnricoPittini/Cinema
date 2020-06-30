@@ -10,14 +10,14 @@ class ResultException(Exception):
     pass
 
 ###################################################
-engine=create_engine("postgres://matteo:matteofacci@localhost:5432/cinema")
+engine=create_engine("postgres://enrico:alessandro@localhost:5432/cinema")
 metadata=MetaData()
 utenti=Table("Utenti",metadata,Column("email",String,primary_key=True)
                               ,Column("nomeUtente",String,nullable=False)
                               ,Column("pwd",String,nullable=False)
-                              ,Column("annoNascita",Integer)
+                              ,Column("annoNascita",Integer,nullable=False)
                               ,Column("sesso",String,CheckConstraint("sesso='M' OR sesso='F'"))
-                              ,Column("provincia",String)
+                              ,Column("provincia",String,nullable=False)
                               ,Column("gestore",Boolean,nullable=False)
                               ,Column("annoAssunzione",Integer))
 film=Table("Film",metadata,Column("idFilm",Integer,primary_key=True)
@@ -234,7 +234,7 @@ def proiezioni_future_query():
     return res
 
 #Crea un nuovo utente (cliente) con questi dati
-def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia,annoAssunzione):
+def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia):
     if("maschio" in sesso):
         sesso="M"
     elif("femmina" in sesso):
@@ -244,7 +244,7 @@ def aggiungi_utente_query(email,pwd,nomeUtente,annoNascita,sesso,provincia,annoA
     conn=engine.connect()
     trans=conn.begin()
     try:
-        #E' necessaria una transazione, perche' devo effettura in successione una lettura ed una scrittura nel database. L'eventuale concorrenza di questa operazione
+        #E' necessaria una transazione, perche' devo effetture in successione una lettura ed una scrittura nel database. L'eventuale concorrenza di questa operazione
         #potrebbe generare problemi (lost update, fantasmi)
 
         #Controllo che non ci sia nessun'altro utente con stessa email
@@ -361,7 +361,7 @@ def infoProiezione_query(id_proiezione):
     res=res.fetchone()
     if(res is None):
         conn.close()
-        raise EmptyResultException
+        raise ResultException
     conn.close()
     return res
 
@@ -403,7 +403,7 @@ def film_genere_query(genereFilm):
     s=select([film]).where(and_(generi.c.film==film.c.idFilm,generi.c.genere==bindparam('genere')))
     res=conn.execute(s,genere=genereFilm)
     res=res.fetchall()
-    print(res)
+    #print(res)
     conn.close()
     if(len(res)==0):
         raise  EmptyResultException
@@ -416,7 +416,7 @@ def postiOccupati_proiezione_query(id_proiezione):
     s=select([sale.c.disponibile,sale.c.numPosti,proiezioni.c.orario]).where(and_(proiezioni.c.idProiezione==bindparam('id'),sale.c.idSala==proiezioni.c.sala))
     res=conn.execute(s,id=id_proiezione)
     res=res.fetchone()
-    if(len(res)==0 or (not res["disponibile"]) or res["orario"]<datetime.now()):
+    if((res is None) or (not res["disponibile"]) or res["orario"]<datetime.now()):
         conn.close()
         raise ResultException
 
@@ -456,12 +456,41 @@ def compra_biglietto_query(posto,id_proiezione,email):
     trans=conn.begin()
 
     try:
-        if(posto in postiOccupati_proiezione_query(id_proiezione)): #Errore : posto gia' acquistato
+        #if(posto in postiOccupati_proiezione_query(id_proiezione)): #Errore : posto gia' acquistato
+        #    raise ResultException
+
+        #controllo che la sala sia ancora disponibile e che la proiezione non sia gia' passata
+        s=select([sale.c.disponibile,sale.c.numPosti,proiezioni.c.orario]).where(and_(proiezioni.c.idProiezione==bindparam('id'),sale.c.idSala==proiezioni.c.sala))
+        res=conn.execute(s,id=id_proiezione)
+        res=res.fetchone()
+        if((res is None) or (not res["disponibile"]) or res["orario"]<datetime.now()):
+            conn.close()
             raise ResultException
+
+        numPosti=res["numPosti"] #numPosti della sala della proiezione
+
+        posto=int(posto)
+        if(posto<0 or posto>=numPosti): #posto non valido
+            conn.close()
+            raise ResultException
+
+        #Per ora tutto ok
+        #Prendo i posti gia' acquistati per quella proiezione
+        s=select([biglietti.c.posto]).where(biglietti.c.proiezione==bindparam('id'))
+        res=conn.execute(s,id=id_proiezione)
+        list=res.fetchall()
+        if(len(list)>0):
+            list=[x["posto"] for x in list]
+
+        if(posto in list): #Errore : posto gia' acquistato
+            conn.close()
+            raise ResultException
+
         ins=biglietti.insert()
         conn.execute(ins,[{"posto":posto,"proiezione":id_proiezione,"cliente":email}]) #Creo nuovo biglietto
         trans.commit()
         conn.close()
+
     except:
         trans.rollback()
         conn.close()
