@@ -32,7 +32,7 @@ class User(UserMixin):
     def isGestore(self):
         return self.gestore
 
-@login_manager.user_loader 
+@login_manager.user_loader
 def load_user(user_email):
     user=user_email_query(user_email)
     return User( user["email"] , user["pwd"],user["nomeUtente"],user["annoNascita"],user["sesso"],user["provincia"],user["gestore"],user["annoAssunzione"])
@@ -461,7 +461,5 @@ def eliminaProiezioneFuturaProc(proiezione):
     if current_user.isGestore() is False:
         return render_template("erroreRisultato.html",message="Devi essere un gestore per eseguire questa operazione",percorsoPrec=request.referrer)
     else:
-        if proiezione not in idproiezioni_future_query():
-            return render_template("erroreRisultato.html",message="Impossibile eliminare questa proiezione.",percorsoPrec=request.referrer)
         delete_proiezione_query(proiezione)
         return redirect(url_for("eliminaProiezioneFutura"))
