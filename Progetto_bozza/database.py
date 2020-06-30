@@ -50,25 +50,24 @@ metadata.create_all(engine)
 conn=engine.connect()
 
 ins=utenti.insert()
-res=conn.execute(select([utenti]))
-for r in res.fetchall():
-    print(r)
-conn.execute(ins,{"email":"pittinienrico@hotmail.it","nomeUtente":"Enrico","pwd":pbkdf2_sha256.hash(tarallo99),"annoNascita":1999,"sesso":"M","provincia":"Treviso","gestore":False})
+conn.execute(ins,{"email":"matteofacci@hotmail.it","nomeUtente":"Matteo","pwd":pbkdf2_sha256.hash("postgres"),"annoNascita":1998,"sesso":"M","provincia":"Treviso","gestore":True,"annoAssunzione":2001})
+ins=utenti.insert()
+conn.execute(ins,{"email":"pittinienrico@hotmail.it","nomeUtente":"Enrico","pwd":pbkdf2_sha256.hash("tarallo99"),"annoNascita":1999,"sesso":"M","provincia":"Treviso","gestore":False})
 ins=film.insert()
-conn.execute(ins,[{"idFilm":1,"titolo":"Memento","anno":2000,"regista":"Christopher Nolan","minuti":114},
-                  {"idFilm":2,"titolo":"Inception","anno":2010,"regista":"Christopher Nolan","minuti":148},
-                  {"idFilm":3,"titolo":"Insomnia","anno":2002,"regista":"Christopher Nolan","minuti":118},
-                  {"idFilm":4,"titolo":"The Prestige","anno":2006,"regista":"Christopher Nolan","minuti":130},
-                  {"idFilm":5,"titolo":"Una notte da leoni","anno":2009,"regista":"Todd Phillips","minuti":108},
-                  {"idFilm":6,"titolo":"Una notte da leoni 2","anno":2011,"regista":"Todd Phillips","minuti":102},
-                  {"idFilm":7,"titolo":"Una notte da leoni 3","anno":2013,"regista":"Todd Phillips","minuti":100},
-                  {"idFilm":8,"titolo":"Joker","anno":2019,"regista":"Todd Phillips","minuti":122},
-                  {"idFilm":9,"titolo":"Avatar","anno":2010,"regista":"James Cameron","minuti":162},
-                  {"idFilm":10,"titolo":"Titanic","anno":1997,"regista":"James Cameron","minuti":195},
-                  {"idFilm":11,"titolo":"Avenegers: Infinity War","anno":2018,"regista":"Anthony e Joe Russo","minuti":149},
-                  {"idFilm":12,"titolo":"Avenegers: Endgame","anno":2019,"regista":"Anthony e Joe Russo","minuti":181},
-                 {"idFilm":13,"titolo":"Captain America: Civil War","anno":2016,"regista":"Anthony e Joe Russo","minuti":147},
-                 {"idFilm":14,"titolo":"Shutter Island","anno":2010,"regista":"Martin Scorsese","minuti":138}])
+conn.execute(ins,[{"titolo":"Memento","anno":2000,"regista":"Christopher Nolan","minuti":114},
+                  {"titolo":"Inception","anno":2010,"regista":"Christopher Nolan","minuti":148},
+                  {"titolo":"Insomnia","anno":2002,"regista":"Christopher Nolan","minuti":118},
+                  {"titolo":"The Prestige","anno":2006,"regista":"Christopher Nolan","minuti":130},
+                  {"titolo":"Una notte da leoni","anno":2009,"regista":"Todd Phillips","minuti":108},
+                  {"titolo":"Una notte da leoni 2","anno":2011,"regista":"Todd Phillips","minuti":102},
+                  {"titolo":"Una notte da leoni 3","anno":2013,"regista":"Todd Phillips","minuti":100},
+                  {"titolo":"Joker","anno":2019,"regista":"Todd Phillips","minuti":122},
+                  {"titolo":"Avatar","anno":2010,"regista":"James Cameron","minuti":162},
+                  {"titolo":"Titanic","anno":1997,"regista":"James Cameron","minuti":195},
+                  {"titolo":"Avenegers: Infinity War","anno":2018,"regista":"Anthony e Joe Russo","minuti":149},
+                  {"titolo":"Avenegers: Endgame","anno":2019,"regista":"Anthony e Joe Russo","minuti":181},
+                 {"titolo":"Captain America: Civil War","anno":2016,"regista":"Anthony e Joe Russo","minuti":147},
+                 {"titolo":"Shutter Island","anno":2010,"regista":"Martin Scorsese","minuti":138}])
 ins=generi.insert()
 conn.execute(ins,[{"genere":"Drammatico","film":1},
                  {"genere":"Thriller","film":1},
@@ -108,11 +107,11 @@ conn.execute(ins,[{"genere":"Drammatico","film":1},
                   {"genere":"Noir","film":14}])
 
 ins=sale.insert()
-conn.execute(ins,[{"idSala":1,"numPosti":50,"numFile":10,"disponibile":True},
-                 {"idSala":2,"numPosti":25,"numFile":5,"disponibile":True},
-                 {"idSala":3,"numPosti":25,"numFile":5,"disponibile":False},
-                 {"idSala":4,"numPosti":75,"numFile":5,"disponibile":True},
-                 {"idSala":5,"numPosti":100,"numFile":10,"disponibile":True}])
+conn.execute(ins,[{"numPosti":50,"numFile":10,"disponibile":True},
+                 {"numPosti":25,"numFile":5,"disponibile":True},
+                 {"numPosti":25,"numFile":5,"disponibile":False},
+                 {"numPosti":75,"numFile":5,"disponibile":True},
+                 {"numPosti":100,"numFile":10,"disponibile":True}])
 
 ins=proiezioni.insert()
 conn.execute(ins,[{"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":1,"sala":1},
@@ -124,7 +123,7 @@ conn.execute(ins,[{"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":1,"sal
                   {"orario":datetime(2020,7,15,20,15),"prezzo":9.5,"film":2,"sala":4},
                   {"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":2,"sala":5},
                   {"orario":datetime(2019,4,15,21,30),"prezzo":10.5,"film":2,"sala":1},
-                  {"orario":datetime(2020,6,27,15,30),"prezzo":7.5,"film":3,"sala":2},
+                  {"orario":datetime(2020,8,27,15,30),"prezzo":7.5,"film":3,"sala":2},
                   {"orario":datetime(2020,11,4,21,30),"prezzo":9.5,"film":3,"sala":5},
                   {"orario":datetime(2017,1,1,21,30),"prezzo":9.0,"film":3,"sala":5},
                   {"orario":datetime(2019,5,5,21,30),"prezzo":9.5,"film":4,"sala":4},
@@ -132,7 +131,7 @@ conn.execute(ins,[{"orario":datetime(2017,10,4,21,30),"prezzo":9.5,"film":1,"sal
                   {"orario":datetime(2016,5,4,21,30),"prezzo":9.5,"film":4,"sala":2},
                   {"orario":datetime(2020,4,4,21,30),"prezzo":9.5,"film":4,"sala":1},
                   {"orario":datetime(2020,7,4,21,30),"prezzo":9.5,"film":5,"sala":1},
-                  {"orario":datetime(2020,7,1,21,30),"prezzo":9.0,"film":5,"sala":2},
+                  {"orario":datetime(2020,7,7,21,30),"prezzo":9.0,"film":5,"sala":2},
                   {"orario":datetime(2014,10,4,21,30),"prezzo":9.5,"film":5,"sala":3},
                   {"orario":datetime(2013,10,4,21,30),"prezzo":9.5,"film":5,"sala":3},
                   {"orario":datetime(2013,11,4,21,30),"prezzo":9.5,"film":5,"sala":4},
