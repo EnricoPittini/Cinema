@@ -1,0 +1,25 @@
+{% extends "ricerca_base.html" %}
+
+{% block ricercablock %}
+Film <strong>{{proiezFilm["titolo"]}}</strong> <br>
+Orario <strong>{{proiezFilm["orario"]}}</strong> <br>
+Durata <strong>{{proiezFilm["minuti"]}}</strong> minuti<br>
+Sala <strong>{{proiezFilm["sala"]}} </strong> <br>
+Prezzo <strong>{{proiezFilm["prezzo"]}}</strong> euro<br><br>
+Clicca su un posto per acquistarlo
+<table border="1px" style="text-align:center">
+    {% for i in range(0,f) %}
+    <tr>
+    <th>Fila{{i}}</th>
+    {% for j in range(0,c) %}
+    {% if i*c+j in listaPostiLiberi %}
+    <td><a href={{url_for("confermaAcquistoPosto",id_proiezione=id_pro,posto=i*c+j)}}>{{  i*c+j }}</a></td>
+    {% else %}
+    <td>{{i*c+j}}</td>
+    {% endif %}
+    {% endfor %}
+    </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}

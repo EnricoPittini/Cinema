@@ -1,6 +1,0 @@
-{% extends "base.html" %}
-
-{% block pageblock %}
-Posto {{posto}} del film {{proiezFilm["titolo"]}} con orario {{proiezFilm["orario"]}} e sala {{proiezFilm["sala"]}} acquistato correttamente! <br>
-Clicca <a href={{url_for("mostraPostiProiezione",id_proiezione=id_pro)}}>qui</a> per acquistarne un altro.
-{% endblock %}

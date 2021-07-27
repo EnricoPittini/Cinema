@@ -1,9 +1,0 @@
-{% extends "ricerca_base.html" %}
-
-{% block ricercablock %}
-<ul>
-  {% for genere in listaGeneri %}
-  <li><a href={{url_for("ricercaPerGenereFilms",genereFilm=genere)}}>{{ genere }}</a></li>
-  {% endfor %}
-</ul>
-{% endblock %}

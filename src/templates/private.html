@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block pageblock %}
+<strong> AREA RISERVATA </strong> <br><br>
+Benvenuto {{nome}}! <br><br>
+<a href="/ricerca">Ricerca film</a><br>
+<a href="/logout">Logout</a> <br><br><br>
+{% if posti %}
+Ricordati dei tuoi posti acquistati!
+<table border="1px" style="text-align:center">
+    <tr>
+      <th>Posto</th>
+      <th>Orario</th>
+      <th>Sala</th>
+      <th>Film</th>
+      <th>Durata</th>
+    </tr>
+    {% for p in posti %}
+      <tr>
+        <td>{{p["posto"]}}</td>
+        <td>{{p["orario"]}}</td>
+        <td>{{p["sala"]}}</td>
+        <td>{{p["titolo"]}}</td>
+        <td>{{p["minuti"]}}</td>
+      </tr>
+    {% endfor %}
+</table>
+{% endif %}
+{% endblock %}

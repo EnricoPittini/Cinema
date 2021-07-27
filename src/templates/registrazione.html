@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block pageblock %}
+Inserisci un nuovo utente:<br><br>
+<form action="/registrazione" method="POST">
+  <div>
+    <label>Email:</label><br>
+    <input name="email" type="text"><br>
+    <label>Nome utente:</label><br>
+    <input name="userName" type="text"><br>
+    <label>Password:</label><br>
+    <input name="pwd" type="password"><br>
+    <label>Provincia:</label><br>
+    <input name="prov" type="text"><br>
+    <label>Anno di nascita:</label><br>
+    <input name="annoNascita" type="text"><br>
+    <label>Sesso:</label><br>
+    <select name="sesso">
+      <option value="M">Maschio</option>
+      <option value="F">Femmina</option>
+    </select><br>
+    <input type="submit">
+  </div>
+</form>
+
+{% endblock %}
