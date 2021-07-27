@@ -1,2 +1,2 @@
 # Cinema
-A simple cinema web application 
+A cinema web application 
